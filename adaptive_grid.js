@@ -1,14 +1,15 @@
 const fs = require('fs');
 const _ = require('lodash');
 const mathjs = require('mathjs')
-const lines = fs.readFileSync('./park.txt').toString().split('\n');
+const lines = fs.readFileSync('./road.txt').toString().split('\n');
 console.log(lines.length);
 
 let screen_width = 12;
 let screen_hight = 30;
-let video_x = 876;
-let video_y = 540;
-
+// let video_x = 876;
+// let video_y = 540;
+let video_x = 980;
+let video_y = 580
 let grids = {};
 let grid_obj_sizes = {} // 일반 가로 세로
 let grid_obj_sizes2 = {}; // 높이, 넓이 / 2 ^ 2
@@ -180,9 +181,11 @@ function func(x, y, len_x, len_y, key, arr) {
 //   console.log(`[${key}] ${key_x},${key_y} grid_x: ${grid_x}, grid_y: ${grid_y}`);
 
 // }
-func(0, 0, 876, 540, `1`, first_ary)
+func(0, 0, video_x, video_y, `1`, first_ary)
+
+// road - 980 - 540
 console.log(Object.keys(grid_result).length)
 for (let key in grid_result) {
-  fs.appendFileSync('./tmp.txt', `${JSON.stringify(grid_result[key])},\n`)
+  fs.appendFileSync('./road_result.txt', `${JSON.stringify(grid_result[key])},\n`)
   // console.log(screen_result[key])
 }
