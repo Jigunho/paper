@@ -54,13 +54,13 @@ function func(x, y, len_x, len_y, key, arr) {
     return
   }
   else if (grid_size < mathjs.mean(sizes)) {
-    grid_result[key] = { grid_size: grid_size, x, y, w: len_x, h: len_y, count: sizes.length, obj_size_mean: mathjs.mean(sizes), obj_size_std: mathjs.std(sizes) };
+    grid_result[key] = { grid_size: grid_size, x, y, w: len_x, h: len_y, count: sizes.length, obj_size_mean: mathjs.mean(sizes), obj_size_std: mathjs.std(sizes), filtered: false };
     std_result.push(`${grid_size}\t${mathjs.std(sizes)}\t${mathjs.mean(sizes)}\t${sizes.length}`);
     return;
 
   } else if (sizes.length > 10 && sizes.length <= 10) {
     // console.log(`key[${key}] : gridsize:${grid_size}, sizemean ${mathjs.mean(sizes)}`);
-    grid_result[key] = { grid_size: grid_size, x, y, w: len_x, h: len_y, count: sizes.length, obj_size_mean: mathjs.mean(sizes), obj_size_std: mathjs.std(sizes) };
+    grid_result[key] = { grid_size: grid_size, x, y, w: len_x, h: len_y, count: sizes.length, obj_size_mean: mathjs.mean(sizes), obj_size_std: mathjs.std(sizes), filtered: false };
     std_result.push(`${grid_size}\t${mathjs.std(sizes)}\t${mathjs.mean(sizes)}\t${sizes.length}`);
     std_ratio_result.push(mathjs.std(sizes)/mathjs.mean(sizes))
     std_ratio_result2.push(mathjs.mean(sizes)/grid_size);
@@ -109,7 +109,7 @@ function func(x, y, len_x, len_y, key, arr) {
 
     screen_result[key] = { x: screen_x, y: screen_y, w: screen_len_x, h: screen_len_y, i: key };
     std_result.push(`${grid_size}\t${mathjs.mean(sizes)}\t${mathjs.std(sizes)}\t${sizes.length}`);
-    grid_result[key] = { grid_size: grid_size, obj_size_mean: mathjs.mean(sizes), obj_size_std: mathjs.std(sizes), x, y, w: len_x, h: len_y, count: sizes.length };
+    grid_result[key] = { grid_size: grid_size, obj_size_mean: mathjs.mean(sizes), obj_size_std: mathjs.std(sizes), x, y, w: len_x, h: len_y, count: sizes.length,filtered: false };
     std_ratio_result.push(mathjs.std(sizes)/mathjs.mean(sizes))
     std_ratio_result2.push(mathjs.mean(sizes)/grid_size);
     console.log(`grid size: ${grid_size}, sizemean: ${mathjs.mean(sizes)}`)
