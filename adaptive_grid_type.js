@@ -1,27 +1,40 @@
 const fs = require('fs');
 const _ = require('lodash');
 const mathjs = require('mathjs')
-const file_name = 'road_4802'
+const file_name = '4800'
 const lines = fs.readFileSync(`./0303_type/${file_name}.txt`).toString().split('\n');
 console.log(lines.length);
 
 // let video_x = 360;  // 
 // let video_y = 240; // 사거리(4801)
 
-let video_x = 876;  // road ( road_4802)
-let video_y = 540;
+// let video_x = 876;  // road ( road_4802)
+// let video_y = 540;
 
+
+let video_x = 360;  // 위, 아래 (4800) , forbus 
+let video_y = 250;
 
 let std_ratio_result = []; // 편차/ 평균
 let std_ratio_result2 = [];
 
-let object_type = '100'; // 20차량, 100 사람
+let object_type = '20'; // 20차량, 100 사람
 let std_result = [];
 let grid_result = {};
 let first_ary = [];
 let error_cnt = 0;
 let not_obj = 0;
-let area_size_ary = { '00': [], '01': [], '10': [], '11': [] };
+
+let area_size_ary = { '00': [], '01': [], '10': [], '11': [] }; // 부분영역별 사이즈를 통한 에러필터링 하기 위한 
+
+let entry_grid = {};
+let exit_grid = {};
+let exit_grid_count = 0;
+let entry_grid_count = 0;
+let exit_grid_error = 0;
+let entry_grid_error = 0;
+
+
 for (let i = 0; i < lines.length; i++) {
   let cols = lines[i].split('\t');
   if (cols[3] !== object_type) {
@@ -31,7 +44,7 @@ for (let i = 0; i < lines.length; i++) {
   }
   let size = parseInt(cols[7]) * parseInt(cols[8]);
   if (!isNaN(size)) {
-    let obj = { x: parseInt(cols[5]), y: parseInt(cols[6]), size, object_id: cols[2] }
+    let obj = { timestamp: parseInt(cols[1]), x: parseInt(cols[5]), y: parseInt(cols[6]), size, object_id: cols[2] }
     // console.log(size);
     first_ary.push(obj);
 
@@ -158,6 +171,8 @@ function func(x, y, len_x, len_y, key, arr) {
 }
 
 func(0, 0, video_x, video_y, `1`, first_ary)
+console.log(`--- first len : ${first_ary.length}`);
+console.log(`raw grid result 갯수: ${Object.keys(grid_result).length}`);
 // console.log(mathjs.mean(std_ratio_result));
 // console.log(mathjs.mean(std_ratio_result2));
 
@@ -223,6 +238,8 @@ console.log(`area error ${error_cnt}, scond_ary len ${second_ary.length} fist: $
 grid_ary = {};
 grid_ary[1] = second_ary;
 func(0, 0, video_x, video_y, `1`, second_ary)
+console.log(`filtered grid result 갯수: ${Object.keys(grid_result).length}`);
+
 // for (let key in grid_result) {
 //   fs.appendFileSync(`./result/${file_name}_${object_type}_fil_result.txt`, `${JSON.stringify(grid_result[key])},\n`)
 // }
@@ -233,40 +250,100 @@ func(0, 0, video_x, video_y, `1`, second_ary)
 let grid_direction_result = {};
 for (let key in grid_result) {
   grid_direction_result[key] = [];
+  entry_grid[key] = 0;
+  exit_grid[key] = 0;
 }
+
 let mean_x_y_error = 0;
 let mean_x_y_success = 0;
+let obj_id_sum = 0;
 let obj_id_ary = _.groupBy(second_ary, 'object_id');
 console.log(`obj ids : ${Object.keys(obj_id_ary).length}`);
 let log_avg = [];
 let ids = Object.keys(obj_id_ary);
+let oo = 0;
 for (let i = 0; i < ids.length; i++) {
+  obj_id_sum += obj_id_ary[ids[i]].length
   log_avg.push(obj_id_ary[ids[i]].length);
   let arr = obj_id_ary[ids[i]];
-  if (arr.length === 1) {
-    continue;
-  }
+  arr.sort(function(a,b) {
+    return a.timestamp - b.timestamp
+  })
+
   for (let j = 1; j < arr.length; j++) {
-    let direction = Math.atan2(arr[j].x - arr[j - 1].x, arr[j].y - arr[j - 1].y) / Math.PI;
+    
+    
+    if (arr[j].x === arr[j-1].x && arr[j].y === arr[j-1].y) {
+      continue;
+    }
+    let direction = Math.atan2(arr[j-1].y - arr[j].y, arr[j].x - arr[j - 1].x) * 180 / Math.PI;
+    direction = (direction + 360) % 360;
+   
     let mean_x = (arr[j].x + arr[j - 1].x) / 2;
     let mean_y = (arr[j].y + arr[j - 1].y) / 2;
+    // let mean_x = arr[j-1].x;
+    // let mean_y = arr[j-1].y;
     let r = getGridId(mean_x,mean_y);
+
+    if (j === 1 && r !== -1) {
+      entry_grid[r] +=1;
+      entry_grid_count += 1;
+    } else if (j===1 && r === -1){
+      entry_grid_error += 1;
+    }
+
+    if (j === arr.length - 1 && r !== -1) {
+      exit_grid[r] += 1;
+      exit_grid_count += 1;
+    } else if (j == arr.length === -1 && r === -1){
+      exit_grid_error += 1;
+    }
+
     if (r === -1) {
       mean_x_y_error ++;
     } else {
       mean_x_y_success ++;
       grid_direction_result[r].push(direction);
     }
-  }
-}
-console.log(mean_x_y_error);
-console.log(mean_x_y_success);
-for (let key in grid_direction_result) {
-  if (grid_direction_result[key].length === 0) {
-    console.log(`${key}(0)`);
     
-  } else {
-    console.log(`${key}(${grid_direction_result[key].length}) - ${mathjs.mean(grid_direction_result[key])}`)
+
+    // console.log(`${arr[j].timestamp} ${arr[j].object_id} (${r}) - ${direction}`);
 
   }
 }
+
+
+
+console.log('---------------')
+console.log(`제자리 obj : ${oo}`);
+console.log(`total obj transaction sum : ${obj_id_sum}`);
+console.log(mean_x_y_error);
+console.log(mean_x_y_success);
+let log_sum = 0;
+let dir_sum = 0;
+for (let key in grid_direction_result) {
+
+  log_sum += grid_result[key].count;
+  dir_sum += grid_direction_result[key].length
+
+  if (grid_direction_result[key].length === 0) {
+    // console.log(`${key}(0)`);
+    grid_result[key]['direction_mean'] = 0
+    grid_result[key]['direction_std'] = 0
+    grid_result[key]['direction_count'] = grid_direction_result[key].length;
+    grid_result[key]['entry_count'] = entry_grid[key];
+    grid_result[key]['exit_count'] = exit_grid[key];
+
+  } else {
+    grid_result[key]['direction_mean'] = mathjs.mean(grid_direction_result[key]);
+    grid_result[key]['direction_std'] = mathjs.std(grid_direction_result[key]);
+    grid_result[key]['direction_count'] = grid_direction_result[key].length;
+    grid_result[key]['entry_count'] = entry_grid[key];
+    grid_result[key]['exit_count'] = exit_grid[key];
+  }
+  // console.log(`${key} log cnt: ${grid_result[key].count} , direction cnt: ${grid_direction_result[key].length}`)
+  fs.appendFileSync(`./result/${file_name}_${object_type}_fil_direction_result.txt`, `${JSON.stringify(grid_result[key])},\n`)
+
+}
+console.log(`entry count : ${entry_grid_count}/${entry_grid_error}, exit count : ${exit_grid_count}/${exit_grid_error}`);
+console.log(`log sum : ${log_sum}, dir sum: ${dir_sum}`);

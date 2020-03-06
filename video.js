@@ -1,7 +1,7 @@
 const fs = require('fs');
 const _ = require('lodash');
 const mathjs = require('mathjs')
-const lines = fs.readFileSync('./bus_road.txt').toString().split('\n');
+const lines = fs.readFileSync('./0303_type/4800.txt').toString().split('\n');
 console.log(lines.length);
 
 let screen_width = 12;
@@ -10,9 +10,6 @@ let screen_hight = 30;
 // let video_y = 540;
 // let video_x = 980;
 // let video_y = 580
-
-let video_x = 720;
-let video_y = 500; // bus road
 let grids = {};
 let grid_obj_sizes = {} // 일반 가로 세로
 let grid_obj_sizes2 = {}; // 높이, 넓이 / 2 ^ 2
@@ -22,8 +19,8 @@ let y_max = -1;
 for (let i = 0 ; i < lines.length ; i ++) {
   let cols = lines[i].split('\t');
 
-  let x = parseInt(cols[4]);
-  let y = parseInt(cols[5]);
+  let x = parseInt(cols[5]);
+  let y = parseInt(cols[6]);
   if(x_max < x) {
     x_max = x;
   }
