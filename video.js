@@ -1,7 +1,7 @@
 const fs = require('fs');
 const _ = require('lodash');
 const mathjs = require('mathjs')
-const lines = fs.readFileSync('./0303_type/4800.txt').toString().split('\n');
+const lines = fs.readFileSync('./0303_type/japan4road_15min.txt').toString().split('\n');
 console.log(lines.length);
 
 let screen_width = 12;
