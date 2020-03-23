@@ -33,7 +33,7 @@ export default {
       let stroke_width_ = 1;
       let dir_degree = item.direction_mean
       if (item.count < 50) {
-        back_ = 'black'
+       // back_ = 'black'
         stroke_width_ = 0;
       }
       // else if (item.direction_count === 0) {
@@ -122,14 +122,14 @@ export default {
     //i create an extra var for to change some image properties
       var img1 = myImg.set({ left: 0, top: 0, 
       // width: 360, height: 240
-      // width: 877, height: 540 // road
+      //width: 877, height: 540 // road
       // width: 1080, height: 540 // europe
       //       width: 1080, height: 540 // japan
 
 
       });
-      img1.scaleToWidth(360);
-      img1.scaleToHeight(240);
+     img1.scaleToWidth(360);
+       img1.scaleToHeight(240);
       canvas.add(img1);
       for (let i = 0 ; i < lines.length ; i ++) {
         canvas.add(lines[i])
@@ -147,7 +147,7 @@ export default {
 
       },
       
-      rank: 39,
+      rank: 4,
 // 39 + 20 + 16 + 15 + 13 + 11 + 11 + 11
 // 19 + 18 
 // 17 + 12
