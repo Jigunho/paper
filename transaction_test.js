@@ -2,15 +2,18 @@ const fs = require('fs');
 const _ = require('lodash');
 const mathjs = require('mathjs')
 const file_name = '4801'
+const getIdModule = require('./modules/make_area');
 const lines = fs.readFileSync(`./0303_type/${file_name}.txt`).toString().split('\n');
 console.log(lines.length);
 
 let first_ary = [];
 let second_ary = [];
 let static_grid_result = {};
+let static_area_result = {}
 
 
-
+let video_x = 360;
+let video_y = 240;
 let object_type = '20'
 for (let i = 0; i < lines.length; i++) {
   let cols = lines[i].split('\t');
@@ -26,7 +29,29 @@ for (let i = 0; i < lines.length; i++) {
       camera_id: cols[0], timestamp: parseInt(cols[1]), object_id: cols[2], object_type:
         cols[3], static_grid_id: cols[4], x: parseInt(cols[5]), y: parseInt(cols[6]), width: parseInt(cols[7]), height: parseInt(cols[8]), video_x: cols[9], video_y: cols[10], size
     }
-    // console.log(size);
+    let obj_x = obj.x;
+    let obj_y = obj.y;
+    if (obj_x <= 0) {
+      obj_x = 1;
+    }
+    if (obj_x > video_x) {
+      obj_x = video_x - 1;
+    }
+    if (obj_y <= 0) {
+      obj_y = 1;
+    }
+    if (obj_y > video_y) {
+      obj_y = video_y - 1;
+    }
+    let a_id = getIdModule.getAreaId(video_x, video_y, obj_x, obj_y);
+    let g_id = getIdModule.getGridId(video_x, video_y, obj_x, obj_y);
+    // if (obj.static_grid_id.length < 3) {
+    //   continue;
+    // }
+    // console.log(`${obj.static_grid_id},  x:${obj_x}, y:${obj_y} ,a_id:${a_id}, g_id:${g_id},`);
+    obj['a_id'] = a_id;
+    obj['g_id'] = g_id;
+    // console.log(JSON.stringify(obj))
     first_ary.push(obj);
 
   } else {
@@ -39,15 +64,7 @@ let start_end_same_user = 0;
 let obj_type_id_ary = _.groupBy(first_ary, 'object_id');
 console.log(`obj ids : ${Object.keys(obj_type_id_ary).length}`);
 let ids = Object.keys(obj_type_id_ary);
-let uu_cnt = 0;
-let uu_not_cnt = 0;
-let not_include_cnt = 0;
-let include_cnt = 0;
-let c_cnt = 0;
-let p_cnt = 0;
 
-let vel_up_10 = 0;
-let vel_down_10 = 0;
 
 for (let i = 0; i < ids.length; i++) {
 
@@ -69,8 +86,6 @@ for (let i = 0; i < ids.length; i++) {
     start_end_same_user++;
     continue;
   }
-
-  // fs.appendFileSync('./ddd.txt',`${JSON.stringify(arr)}\n`);
 
 
   let user_vel = [];
@@ -103,12 +118,13 @@ for (let i = 0; i < ids.length; i++) {
     let static_log_obj = {
       timestamp: arr[j].timestamp, direction, velocity, object_id: arr[j].object_id,
       size: arr[j].size, object_type: arr[j].object_type, x: arr[j].x, y: arr[j].y, width: arr[j].width, height: arr[j].height,
-      video_x: arr[j].video_x, video_y: arr[j].video_y, camera_id: arr[j].camera_id
+      video_x: arr[j].video_x, video_y: arr[j].video_y, camera_id: arr[j].camera_id, a_id: arr[j].a_id
     };
-    if (!static_grid_result[arr[j].static_grid_id]) {
-      static_grid_result[arr[j].static_grid_id] = [{ static_log_obj }];
+    // console.log(arr[j].a_id)
+    if (!static_area_result[arr[j].a_id]) {
+      static_area_result[arr[j].a_id] = [{ static_log_obj }];
     } else {
-      static_grid_result[arr[j].static_grid_id].push(static_log_obj);
+      static_area_result[arr[j].a_id].push(static_log_obj);
     }
 
 
@@ -135,13 +151,10 @@ for (let i = 0; i < ids.length; i++) {
 
   // }
 }
-// console.log(`uucnt : ${uu_cnt}, uunotcnt: ${uu_not_cnt}`);
-// console.log(`include : ${include_cnt}, not include: ${not_include_cnt}`);
-// console.log(`pcnt  : ${p_cnt}, c cnt: ${c_cnt}`);
-// console.log(`up 10  : ${vel_up_10}, down 10 : ${vel_down_10}`);
+console.log('---------')
 
-// console.log(`start end same user : ${start_end_same_user}`);
-
+console.log(Object.keys(static_area_result));
+console.log('---------')
 
 
 
@@ -204,15 +217,18 @@ let strs3 = ''; // down 중에서 사람
 
 let all_car_type = 0;
 let all_person_type = 0;
-let grid_user_list = _.groupBy(first_ary, 'static_grid_id');
-console.log(`static ids : ${Object.keys(grid_user_list).length}`);
-let grid_ids = Object.keys(grid_user_list);
+// let grid_user_list = _.groupBy(second_ary, 'a_id');
+// console.log(`area ids : ${Object.keys(grid_user_list)}`);
 
-for (let i = 0; i < grid_ids.length; i++) {
-  let arr = static_grid_result[grid_ids[i]];
+// let grid_ids = Object.keys(grid_user_list);
+let strs = ''
+
+for (let area_id in static_area_result) {
+  let arr = static_area_result[area_id];
   if (!arr) {
     continue;
   }
+  console.log(`${area_id}, len: ${arr.length}`)
   let user_min_size = {}
   let user_type = {};
 
@@ -223,8 +239,8 @@ for (let i = 0; i < grid_ids.length; i++) {
   if (arr.length < 2) {
     continue;
   }
-  let strs = ''
   let car_type = 0;
+
   for (let j = 1; j < arr.length; j++) {
 
 
@@ -238,6 +254,7 @@ for (let i = 0; i < grid_ids.length; i++) {
         user_infos[arr[j].object_id] = arr[j]
       }
     }
+    // console.log(arr[j].velocity)
 
     if (!user_min_vel[arr[j].object_id]) {
       user_vels[arr[j].object_id] = [arr[j].velocity];
@@ -261,12 +278,12 @@ for (let i = 0; i < grid_ids.length; i++) {
   let sizes = [];
   let vels = [];
 
-  let size100 = [];
-  let vels100 = [];
   for (let l = 0; l < lens.length; l++) {
     sizes.push(user_min_size[lens[l]]);
     vels.push(mathjs.mean(user_vels[lens[l]]));
   }
+
+  // console.log(`size -${sizes.length}, vels-${vels.length}`);
 
   let size_mean = mathjs.mean(sizes);
   let size_std = mathjs.std(sizes);
@@ -275,34 +292,13 @@ for (let i = 0; i < grid_ids.length; i++) {
   for (let l = 0; l < lens.length; l++) {
     let user_info = user_infos[lens[l]];
     if (mathjs.mean(user_vels[lens[l]]) < vel_mean + 2.5 * vel_std && user_min_size[lens[l]] < size_mean + 2.5 * size_std ) {
-      let str = `${lens[l]},${user_type[lens[l]]},${user_min_size[lens[l]]},${user_min_vel[lens[l]]},${mathjs.mean(user_vels[lens[l]])},${user_max_vel[lens[l]]},${user_info.x},${user_info.y}\n`
+      let str = `${area_id},${lens[l]},${user_type[lens[l]]},${user_min_size[lens[l]]},${user_min_vel[lens[l]]},${mathjs.mean(user_vels[lens[l]])},${user_max_vel[lens[l]]},${user_info.x},${user_info.y}\n`
       strs += str;
     }
-
   }
-  fs.appendFileSync(`./grid_cluster/min_${file_name}_${grid_ids[i]}.txt`, strs);
-
-  // let grid_size_mean = mathjs.mean(sizes);
-  // console.log(grid_size_mean)
-  // 16513214504802	1583242651929	408	100	504	437	227	20	47	984	535
-
-  // for (let j = 1; j < arr.length; j++) {
-  //   if (arr[j].size < grid_size_mean) {
-  //     let str = `${arr[j].camera_id}\t${arr[j].timestamp}\t${arr[j].object_id}\t${arr[j].object_type}\t${grid_ids[i]}\t${arr[j].x}\t${arr[j].y}\t${arr[j].width}\t${arr[j].height}\t${arr[j].video_x}\t${arr[j].video_y}\n`
-  //     strs1 += str;
-
-  //   } else {
-  //     let str = `${arr[j].camera_id}\t${arr[j].timestamp}\t${arr[j].object_id}\t${arr[j].object_type}\t${grid_ids[i]}\t${arr[j].x}\t${arr[j].y}\t${arr[j].width}\t${arr[j].height}\t${arr[j].video_x}\t${arr[j].video_y}\n`
-  //     strs2 += str;
-  //     if (arr[j].object_type === object_type) {
-  //       strs3 += str;
-  //     }
-
-  //   }
-  // }
-
-
 }
+fs.appendFileSync(`./grid_cluster/min_${file_name}.txt`, strs);
+
 console.log(`${all_car_type}, ${all_person_type}`)
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
