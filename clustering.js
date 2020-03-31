@@ -1,7 +1,7 @@
 const fs = require('fs');
 const _ = require('lodash');
 const mathjs = require('mathjs')
-const file_name = 'japan4road_15min'
+const file_name = '4801'
 const lines = fs.readFileSync(`./0303_type/${file_name}.txt`).toString().split('\n');
 console.log(lines.length);
 
