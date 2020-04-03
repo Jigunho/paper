@@ -149,7 +149,7 @@ function func(x, y, len_x, len_y, key, arr, result_ary) {
   } else {
 
   }
-  if (grid_size > mathjs.mean(sizes) + mathjs.std(sizes)) {
+  if (grid_size / 4 > mathjs.mean(sizes) - mathjs.std(sizes)) {
 
     let ary00 = [];
     let ary01 = [];
@@ -258,8 +258,6 @@ for (let i = 0; i < u_lines.length; i++) {
   let cols = u_lines[i].split('\t');
 
   let o_id = parseInt(cols[2]);
-  // if (!include_ids.includes(o_id)) {
-  //   continue;
   // }
 
   let size = parseInt(cols[7]) * parseInt(cols[8]);
@@ -299,7 +297,9 @@ console.log(`obj ids : ${Object.keys(obj_id_ary).length}`);
 let ids = Object.keys(obj_id_ary);
 
 let save_target_ids = [];
-let include_area_ids = ['104','204','203','303','302'];
+let include_area_ids = ['104','204','203','303','302','402']; // 차량 area id 
+// let include_area_ids = ['103','202','203','302']; // 사람 area id 
+
 
 for (let i = 0; i < ids.length; i++) {
   let arr = obj_id_ary[ids[i]];
@@ -336,7 +336,7 @@ for (let i = 0; i < ids.length; i++) {
     ds.push(csv_arr[c].mean_direction);
   }
   // console.log(`direction id [${ids[i]}] - ${ds}`);
-  if (mathjs.mean(ds) < 100) {
+  if ( mathjs.mean(ds) > 180  ) {
     // 아래만 추가
     save_target_ids.push(ids[i])
   }
@@ -367,5 +367,8 @@ for (let i = 0 ; i < save_target_ids.length ; i ++) {
 for (let r_id in objsss) {
   console.log(`${r_id} - len: ${objsss[r_id].length}, ${objsss[r_id]}`);
 }
+
+
+
 
 

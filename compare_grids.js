@@ -57,7 +57,7 @@ for (let i = 1; i < lines.length - 1; i++) {
 
 let grid_ary = {};
 grid_ary[1] = raw_arys;
-function getGridSize(id, grid_infos) {
+function getGridSizeKey(id, grid_infos) {
   return grid_infos[id];
 }
 function getTargetGridInfo(area_id, grid_infos) {
@@ -85,6 +85,7 @@ function getGridSize(x,y, grid_infos) {
       return grid_infos[key].w * grid_infos[key].h;
     }
   }
+  return -1;
 }
 function getStaticGridId(x, y) {
   let GRID_X_SIZE = video_x / 10;
@@ -151,10 +152,8 @@ function func(x, y, len_x, len_y, key, arr, result_ary) {
   } else {
 
   }
-  // if (grid_size > mathjs.mean(sizes) + mathjs.std(sizes)) {
+  if ((grid_size / 4 )> mathjs.mean(sizes) +  0.5 * mathjs.std(sizes)) {
 
-  if (grid_size / 4 > mathjs.mean(sizes) - mathjs.std(sizes)) {
-    
     let ary00 = [];
     let ary01 = [];
     let ary10 = [];
@@ -229,39 +228,32 @@ for (let area_id in area_id_logs) {
 
 }
 // func(0, 0, video_x, video_y, `1`, raw_arys)
-console.log(`--- first len : ${raw_arys.length}`);
-console.log(`small grid result 갯수: ${Object.keys(grid_result_small).length}`);
-console.log(`big grid result 갯수: ${Object.keys(grid_result_big).length}`);
-
-
-
+for (let grid_id in grid_result_small) {
+  console.log(`small: ${grid_id}`);
+}
+for (let grid_id in grid_result_big) {
+  console.log(`big: ${grid_id}`);
+}
+let adaptive_small_grid_infos = {};
+let adaptive_big_grid_infos = {};
 let adaptive_grid_infos = {};
 let static_grid_infos = {};
 
+let include_static_grid_ids = ['205', '305']; 
+
 const u_lines = fs.readFileSync(`./0303_type/${file_name}.txt`).toString().split('\n');
-// let include_ids = [
-//   8,9,10,12,15,35,40,55,134,169,177,185,186,195,197,203,210,231,232,234,259,265,269,280,300,347,387,388,406,409,432,434,440,450,452,476,511,528,542,556,583,594,609,621,654,655,676,770,784,856,891,925,929,1001,1017,1044,1047,1157,1224,1312,1323,1394,1431,1458,1462,1624,1633
-// ] // 아래로가는 ( 100이상 )
-// let include_ids = [54,75,131,145,155,271,344,365,405,490,526,559,603,627,630,636,651,697,704,796,1014,1097,1433,1490,1500] 
-//  위로가는 ( 90이하)
-let include_ids = [8,9,10,12,40,55,134,145,169,185,195,197,203,210,231,232,234,259,265,269,280,300,365,388,406,432,434,440,452,476,490,526,542,556,621,654,655,784,796,929,1014,1224,1394,1458] 
-// 270 이상 혹은 90 - 180
 let u_ary = [];
 for (let i = 0; i < u_lines.length; i++) {
   let cols = u_lines[i].split('\t');
 
-  let o_id = parseInt(cols[2]);
-  if (!include_ids.includes(o_id)) {
-    continue;
-  }
-
   let size = parseInt(cols[7]) * parseInt(cols[8]);
   if (!isNaN(size)) {
+
+    
     let a_id = getIdModule.getAreaId(parseInt(cols[9]), parseInt(cols[10]), parseInt(cols[5]), parseInt(cols[6]));
-    // console.log(`${cols[4]} -> ${a_id}`)
     let obj = { timestamp: parseInt(cols[1]), x: parseInt(cols[5]), y: parseInt(cols[6]), size, object_id: cols[2], static_id: cols[4], area_id: a_id }
-    // console.log(size);
-    u_ary.push(obj);
+    if (include_static_grid_ids.includes(cols[4])) 
+      u_ary.push(obj);
 
   } else {
   }
@@ -283,22 +275,20 @@ for (let obj_id in csv_id_ary) {
     }
   }
 }
-// for (let u_id in obj_cluster_infos) {
-//   console.log(JSON.stringify(obj_cluster_infos[u_id]));
-// }
-
-let save_grid_infos = {}; // 저장할 grid info 
+for (let user_id in obj_cluster_infos) {
+  console.log(`[${user_id}] - ${JSON.stringify(obj_cluster_infos[user_id])}`)
+}
 
 let obj_id_ary = _.groupBy(u_ary, 'object_id');
-console.log(include_ids.length);
 console.log(`obj ids : ${Object.keys(obj_id_ary).length}`);
-let include_area_ids = ['103','202','203','302']; // 사람 area id 
-let log_avg = [];
 let ids = Object.keys(obj_id_ary);
-let user_transactions = {};
-let obj_cnt = 0;
 
-let save_target_ids = [];
+let static_big = 0; // 0403 그리드별로 객체 사이즈 비교를 위한 변수 추가 
+let static_small = 0;
+let adaptive_big_big = 0;
+let adaptive_big_small = 0;
+let adaptive_small_big = 0;
+let adaptive_small_small = 0;
 
 for (let i = 0; i < ids.length; i++) {
   let arr = obj_id_ary[ids[i]];
@@ -323,202 +313,147 @@ for (let i = 0; i < ids.length; i++) {
     let mean_x = (arr[j].x + arr[j - 1].x) / 2;
     let mean_y = (arr[j].y + arr[j - 1].y) / 2;
 
+    if (!obj_cluster_infos[ids[i]]) {
+      // console.log(`[${ids[i]}] not ! ${obj_cluster_infos[ids[i]]}`);
+      break;;
+    } else {
+      // console.log(`[${ids[i]}] exist ! ${obj_cluster_infos[ids[i]]}`);
+    }
+
     let cluster_id = obj_cluster_infos[ids[i]][arr[j].area_id];
-    let big_cluster_id = target_area_cluster_id_big[arr[j].grid_id]
-    let small_cluster_id = target_area_cluster_id_small[arr[j].grid_id];
+    if (!cluster_id) {
+      // console.log(`cur areaid-${arr[j].area_id}, ${ids[i]} - ${JSON.stringify(obj_cluster_infos[ids[i]])}`)
+      break;
+    } else {
+      // console.log(`cur exist!!`)
+    }
+    let big_cluster_id = target_area_cluster_id_big[arr[j].area_id]
+    let small_cluster_id = target_area_cluster_id_small[arr[j].area_id];
+    // console.log(`${ids[i]} area:${arr[j].area_id}: ${cluster_id} - ${big_cluster_id}, ${small_cluster_id}`)
     let r = -1;
     let g_info = null;
+    let g_size = -1;
     if (parseInt(cluster_id, 10) === big_cluster_id) {
       r = getGridId(mean_x, mean_y, grid_result_big)
       g_info = getTargetGridInfo(arr[j].area_id, grid_result_big);
+      g_size = getGridSizeKey(r, grid_result_big);
     } else {
       r = getGridId(mean_x, mean_y, grid_result_small);
       g_info = getTargetGridInfo(arr[j].area_id, grid_result_small);
+      g_size = getGridSizeKey(r, grid_result_small);
+
     }
-    if (r == -1) {
-      // console.log('grid_error');
-      continue;
-    }
-    
-    if (!include_area_ids.includes(arr[j].area_id)) {
-      delete user_transactions[ids[i]];
-      // console.log('delete');
+    if (r == -1 || g_size === -1 ) {
+      // console.log(`grid_id:${r}, x,y(${mean_x},${mean_y}) grid_size:${g_size})`);
       break;
-    }
-
-    if (!save_grid_infos[arr[j].area_id]) {
-      save_grid_infos[arr[j].area_id] = g_info
-    }
-
-
-    let grid_info = { grid_id: r, direction };
-
-    if (!user_transactions[ids[i]]) {
-      user_transactions[ids[i]] = [grid_info];
     } else {
-      user_transactions[ids[i]].push(grid_info);
+      g_size = g_size.grid_size;
+      // console.log(`gsize: ${JSON.stringify(g_size)}`)
+      // console.log('grid math success')
     }
-
-    // let s_id = getStaticGridId(arr[j].x, arr[j].y)
-    // let s = -1;
-    // if (arr[j].size <= static_grid_size) {
-    //   s = 1 - arr[j].size / static_grid_size
-    // } else {
-    //   s = 1 - static_grid_size / arr[j].size
-    // }
-    // if (!static_grid_infos[s_id]) {
-      
-    //   static_grid_infos[s_id] = [s]
-    // } else {
-    //   static_grid_infos[s_id].push(s);
-    // }
-
-    // let s0 = -1;
-    // if (arr[j].size <= adaptive_grid_size) {
-    //   s0 = 1 - arr[j].size / adaptive_grid_size;
-    // } else {
-    //   s0 = 1 - adaptive_grid_size / arr[j].size
-    // }
-
-    // if (!adaptive_grid_infos[r]) {
-    //   adaptive_grid_infos[r] = [s0];
-    // } else {
-    //   adaptive_grid_infos[r].push(s0);
-    // }
-
-  }
-}
-let str = '';
-for (let area_id in save_grid_infos) {
-  console.log(area_id);
-  // console.log(`[${area_id}] : ${JSON.stringify(save_grid_infos[area_id])}`)
-  let arr = save_grid_infos[area_id];
-  for (let i = 0 ; i < arr.length ; i ++) {
-    str += `${JSON.stringify(arr[i])},\n`
-  }
-}
-fs.appendFileSync('./tmp.txt', str);
-
-let grss = {};
-let all_ids = [];
-let user_per_ids = [];
-for (let user_id in user_transactions) {
-  let arr = user_transactions[user_id];
-  let r_ids = [];
-  arr.forEach(v => {
-    r_ids.push(v.grid_id);
-  })
-  let removed_ids = [... new Set(r_ids)];
-
-  console.log(`${user_id} - tracks: ${JSON.stringify(removed_ids)}`);
-  all_ids = all_ids.concat(removed_ids);
-  user_per_ids.push({ user_id, grids: removed_ids });
-}
-let dup_all_ids = [... new Set(all_ids)];
-// console.log(dup_all_ids);
-
-for (let i = 0 ; i < user_per_ids.length; i++) {
-  
-  for (let j = 0 ; j < user_per_ids.length ; j ++) {
-  
-    if (j===i) {
-      continue;
-    }
-    let arr = user_per_ids[i].grids;
     
-    let concat_arr = arr.concat(user_per_ids[j].grids);
-    concat_arr = [...new Set(concat_arr)];
-    // console.log(`id[${user_per_ids[i].user_id},${user_per_ids[j].user_id}] / arr: ${arr.length}, concat_arr: ${concat_arr.length}`)
-    // let dup_arr = [...new Set(arr)];
-  	var d = concat_arr.filter(function (item, pos) {return arr.indexOf(item) != pos}); // 교
-  	var e = concat_arr.filter(function (item, pos) {return arr.indexOf(item) == pos}); // 합
-    // console.log(`id[${user_per_ids[i].user_id},${user_per_ids[j].user_id}] ratio : ${d.length / e.length}`)
+
+    let s_id = getStaticGridId(mean_x, mean_y)
+    let s = -1;
+    if (arr[j].size <= static_grid_size) {
+      s = 1 - arr[j].size / static_grid_size
+      static_small += 1;
+    } else {
+      static_big += 1;
+      s = 1 - static_grid_size / arr[j].size
+    }
+    if (!static_grid_infos[s_id]) {
+      static_grid_infos[s_id] = [s]
+    } else {
+      static_grid_infos[s_id].push(s);
+    }
+
+    let s0 = -1;
+ 
+
+    if (parseInt(cluster_id, 10) === big_cluster_id) {
+      if (arr[j].size <= g_size) {
+        s0 = 1 - arr[j].size / g_size;
+        adaptive_big_small += 1;
+      } else {
+        s0 = 1 - g_size / arr[j].size;
+        adaptive_big_big += 1;
+      }
+      if (!adaptive_big_grid_infos[r]) {
+        adaptive_big_grid_infos[r] = [s0];
+      } else {
+        adaptive_big_grid_infos[r].push(s0);
+      } 
+    }
+    if (parseInt(cluster_id, 10) === small_cluster_id) {
+      if (arr[j].size <= g_size) {
+        s0 = 1 - arr[j].size / g_size;
+        adaptive_small_small += 1;
+      } else {
+        s0 = 1 - g_size / arr[j].size
+        adaptive_small_big += 1;
+      }
+      if (!adaptive_small_grid_infos[r]) {
+        adaptive_small_grid_infos[r] = [s0];
+      } else {
+
+        adaptive_small_grid_infos[r].push(s0);
+      } 
+    }
+
+    if (!adaptive_grid_infos[r]) {
+      adaptive_grid_infos[r] = [s0];
+    } else {
+      adaptive_grid_infos[r].push(s0);
+    }
+
   }
 }
+// fs.appendFileSync('./tmp.txt', str);
+
+console.log(`static up , down  ${static_big}, ${static_small}`);  // 0403 결과 비교 
+console.log(`adaptive[big] up down ${adaptive_big_big}, ${adaptive_big_small}`);
+console.log(`adaptive[small] up down ${adaptive_small_big}, ${adaptive_small_small}`);
 
 //// 0303 고정 그리드, adaptive 그리드 편차 비교
-console.log(`static grid - ${Object.keys(static_grid_infos)}`)
-console.log(`adaptive grid - ${Object.keys(adaptive_grid_infos)}`)
+// console.log(`static grid - ${Object.keys(static_grid_infos)}`)
+// console.log(`adaptive grid - ${Object.keys(adaptive_grid_infos)}`)
 
 for (let s_id in static_grid_infos) {
   let arr = static_grid_infos[s_id];
   // if (arr.length < 100) {
   //   continue;
   // }
-  // fs.appendFileSync(`./clustering_result3/${file_name}_0330_static_grid_result.txt`, `${s_id}\t${arr.length}\t${mathjs.mean(arr)}\t${mathjs.std(arr)}\n`);
+  // fs.appendFileSync(`./compare_result/${file_name}_0330_static_grid_result.txt`, `${s_id}\t${arr.length}\t${mathjs.mean(arr)}\t${mathjs.std(arr)}\n`);
 }
 for (let a_id in adaptive_grid_infos) {
   let arr = adaptive_grid_infos[a_id];
   // if (arr.length < 100) {
   //   continue;
   // }
-  // fs.appendFileSync(`./clustering_result3/${file_name}_0330_adaptive_grid_result.txt`, `${a_id}\t${arr.length}\t${mathjs.mean(arr)}\t${mathjs.std(arr)}\n`);
+  // console.log(`adaptive all - ${a_id}`)
+  // fs.appendFileSync(`./compare_result/${file_name}_0330_adaptive_grid_result.txt`, `${a_id}\t${arr.length}\t${mathjs.mean(arr)}\t${mathjs.std(arr)}\n`);
   // console.log(`adaptive id ${a_id} - ${arr.length} mean: ${mathjs.mean(arr)}(${mathjs.std(arr)})`);
 
+}
+for (let a_id in adaptive_big_grid_infos) {
+  let arr = adaptive_big_grid_infos[a_id];
+  // if (arr.length < 100) {
+  //   continue;
+  // }
+  // console.log(`adaptive big - ${a_id}`)
+
+  // fs.appendFileSync(`./compare_result/${file_name}_0330_adaptive_big_grid_result.txt`, `${a_id}\t${arr.length}\t${mathjs.mean(arr)}\t${mathjs.std(arr)}\n`);
+  // console.log(`adaptive id ${a_id} - ${arr.length} mean: ${mathjs.mean(arr)}(${mathjs.std(arr)})`);
 
 }
+for (let a_id in adaptive_small_grid_infos) {
+  let arr = adaptive_small_grid_infos[a_id];
+  // if (arr.length < 100) {
+  //   continue;
+  // }
+  // console.log(`adaptive small - ${a_id}`)
 
-// group 나중에
-// console.log(`user final ids len : ${Object.keys(user_transactions).length}`);
-// for (let user_id in user_transactions) {
-//   let arr = user_transactions[user_id];
-//   let r_ids = [];
-//   console.log(`user id[${user_id}] len: ${JSON.stringify(arr)}`)
-//   arr.forEach(v => {
-//     r_ids.push(v.grid_id);
-//   })
-//   let grs_dup_removed = [... new Set(r_ids)];
-//   // console.log(grs_dup_removed.join(','));
-//   // arr.filter((item, index) => arr.indexOf(item) === index);
-//   // console.log(`${user_id} - ${arr.join('\t')}`)
-//   // fs.appendFileSync(`./user_result/4801_target.tt`, `${user_id} : ${grs_dup_removed.join(',')}\n`);
-//   if (!gr_max[grs_dup_removed.join(',')]) {
-//     gr_max[grs_dup_removed.join(',')] = [user_id];
-//   } else {
-//     gr_max[grs_dup_removed.join(',')].push(user_id)
-//   }
-// }
-// console.log(Object.keys(gr_max).length);
-// let group_ids = [];
-// for (let grs in gr_max) {
-
-//   if (gr_max[grs].length >= 2) {
-//     let id_strs = [];
-//     let ids = grs.split(',');
-//     group_ids.push(ids);
-//     let str = `[`;
-//     for (let j = 0; j < ids.length; j++) {
-//       let id_info = getGridSize(ids[j]);
-//       id_strs.push(`"${ids[j]}"`);
-//       if (j === ids.length - 1) {
-//         str += JSON.stringify(id_info);
-//       } else {
-//         str += JSON.stringify(id_info) + ',';
-//       }
-//     }
-//     str += ']';
-//     // console.log(id_strs.join(','));
-//     // fs.appendFileSync('./user_result/4801_grid_info.txt', `${str},\n`)
-//     fs.appendFileSync('./user_result/4801_target_grid_id_info.txt', `${id_strs.join(',')},\n`)
-
-//   }
-// }
-
-// let group_id2 = JSON.parse(JSON.stringify(group_ids));
-// for (let i = 0 ; i < group_id2.length ; i ++) {
-//   let cnt = 0;
-//   //console.log(group_id2[i]);
-//   for (let j = 0 ; j < group_ids.length ; j ++) {
-//     if (i === j) {
-//       continue;
-//     } else {
-//       if (group_id2[i].includes(group_ids[j])) {
-
-//       }
-//     }
-//   }
-// }
-
-
-
-//////////////////////////////////////// 타겟 아이디의 고정 그리드 비율
+  // fs.appendFileSync(`./compare_result/${file_name}_0330_adaptive_small_grid_result.txt`, `${a_id}\t${arr.length}\t${mathjs.mean(arr)}\t${mathjs.std(arr)}\n`);
+  // console.log(`adaptive id ${a_id} - ${arr.length} mean: ${mathjs.mean(arr)}(${mathjs.std(arr)})`);
+}
