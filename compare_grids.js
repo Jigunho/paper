@@ -152,7 +152,7 @@ function func(x, y, len_x, len_y, key, arr, result_ary) {
   } else {
 
   }
-  if ((grid_size / 4 )> mathjs.mean(sizes) +  0.5 * mathjs.std(sizes)) {
+  if ((grid_size / 4 )> mathjs.mean(sizes) +  0 * mathjs.std(sizes)) {
 
     let ary00 = [];
     let ary01 = [];
@@ -229,36 +229,68 @@ for (let area_id in area_id_logs) {
 }
 // func(0, 0, video_x, video_y, `1`, raw_arys)
 for (let grid_id in grid_result_small) {
-  console.log(`small: ${grid_id}`);
+  // console.log(`small: ${grid_id}`);
 }
 for (let grid_id in grid_result_big) {
-  console.log(`big: ${grid_id}`);
+  // console.log(`big: ${grid_id}`);
 }
 let adaptive_small_grid_infos = {};
 let adaptive_big_grid_infos = {};
 let adaptive_grid_infos = {};
 let static_grid_infos = {};
 
-let include_static_grid_ids = ['205', '305']; 
-
+// let include_static_grid_ids = ['207','208','307','308','407','408']; // 차량
+let include_static_grid_ids = ['205','305','204','404','603','604'] // 사람
 const u_lines = fs.readFileSync(`./0303_type/${file_name}.txt`).toString().split('\n');
 let u_ary = [];
+let t_ary = [];
 for (let i = 0; i < u_lines.length; i++) {
   let cols = u_lines[i].split('\t');
 
   let size = parseInt(cols[7]) * parseInt(cols[8]);
   if (!isNaN(size)) {
 
-    
     let a_id = getIdModule.getAreaId(parseInt(cols[9]), parseInt(cols[10]), parseInt(cols[5]), parseInt(cols[6]));
     let obj = { timestamp: parseInt(cols[1]), x: parseInt(cols[5]), y: parseInt(cols[6]), size, object_id: cols[2], static_id: cols[4], area_id: a_id }
-    if (include_static_grid_ids.includes(cols[4])) 
-      u_ary.push(obj);
+    t_ary.push(obj);
 
   } else {
   }
 }
+let t_ary_result = _.groupBy(t_ary, 'object_id');
+console.log(`all len : ${Object.keys(t_ary_result).length}`)
+let include_cnt = 0;
+let static_path_ary = [];
+for (let user_id in t_ary_result) {
+  let arr = t_ary_result[user_id];
+  let cnt = 0 ; 
+  let user_statics = [];
+  if (arr.length < 3) {
+    continue;
+  }
+  ///// 모든 유저 다 include /////
+  for (let k = 0 ; k < arr.length ; k ++) {
+    u_ary.push(arr[k]);
+  }
 
+  // for (let k = 0  ; k < arr.length ; k ++) {
+  //   user_statics.push(arr[k].static_id);
+  //   if (include_static_grid_ids.includes(arr[k].static_id)) {
+  //     cnt ++;
+  //   }
+  // }
+  // if (cnt >= 2) {
+  //   for (let k = 0 ; k < arr.length ; k ++) {
+  //     u_ary.push(arr[k]);
+  //   }
+  //   include_cnt+=1;
+  //   let dup_removed = [... new Set(user_statics)];
+  //   static_path_ary.push(dup_removed.length);
+  
+  // } else {
+  // }
+}
+console.log(`include cnt - ${include_cnt}`);
 let csv_id_ary = _.groupBy(raw_arys, 'object_id');
 let obj_cluster_infos = {};
 for (let obj_id in csv_id_ary) {
@@ -276,7 +308,7 @@ for (let obj_id in csv_id_ary) {
   }
 }
 for (let user_id in obj_cluster_infos) {
-  console.log(`[${user_id}] - ${JSON.stringify(obj_cluster_infos[user_id])}`)
+  // console.log(`[${user_id}] - ${JSON.stringify(obj_cluster_infos[user_id])}`)
 }
 
 let obj_id_ary = _.groupBy(u_ary, 'object_id');
@@ -290,6 +322,7 @@ let adaptive_big_small = 0;
 let adaptive_small_big = 0;
 let adaptive_small_small = 0;
 
+let adaptive_path_ary = [];
 for (let i = 0; i < ids.length; i++) {
   let arr = obj_id_ary[ids[i]];
   arr.sort(function (a, b) {
@@ -297,7 +330,7 @@ for (let i = 0; i < ids.length; i++) {
   })
 
 
-
+  let user_adaptives = [];
   let directions = []
   for (let j = 1; j < arr.length; j++) {
 
@@ -350,6 +383,7 @@ for (let i = 0; i < ids.length; i++) {
       g_size = g_size.grid_size;
       // console.log(`gsize: ${JSON.stringify(g_size)}`)
       // console.log('grid math success')
+      user_adaptives.push(r);
     }
     
 
@@ -408,6 +442,8 @@ for (let i = 0; i < ids.length; i++) {
     }
 
   }
+  let dup_removed_adaptives = [... new Set(user_adaptives)];
+  adaptive_path_ary.push(dup_removed_adaptives.length);
 }
 // fs.appendFileSync('./tmp.txt', str);
 
@@ -419,12 +455,16 @@ console.log(`adaptive[small] up down ${adaptive_small_big}, ${adaptive_small_sma
 // console.log(`static grid - ${Object.keys(static_grid_infos)}`)
 // console.log(`adaptive grid - ${Object.keys(adaptive_grid_infos)}`)
 
+// console.log(`static len avg: ${mathjs.mean(static_path_ary)} std: ${mathjs.std(static_path_ary)}`);
+// console.log(`adaptive len avg: ${mathjs.mean(adaptive_path_ary)} std: ${mathjs.std(adaptive_path_ary)}`);
+
+
 for (let s_id in static_grid_infos) {
   let arr = static_grid_infos[s_id];
   // if (arr.length < 100) {
   //   continue;
   // }
-  // fs.appendFileSync(`./compare_result/${file_name}_0330_static_grid_result.txt`, `${s_id}\t${arr.length}\t${mathjs.mean(arr)}\t${mathjs.std(arr)}\n`);
+  fs.appendFileSync(`./compare_result/${file_name}_0330_static_grid_result.txt`, `${s_id}\t${arr.length}\t${mathjs.mean(arr)}\t${mathjs.std(arr)}\n`);
 }
 for (let a_id in adaptive_grid_infos) {
   let arr = adaptive_grid_infos[a_id];
@@ -432,7 +472,7 @@ for (let a_id in adaptive_grid_infos) {
   //   continue;
   // }
   // console.log(`adaptive all - ${a_id}`)
-  // fs.appendFileSync(`./compare_result/${file_name}_0330_adaptive_grid_result.txt`, `${a_id}\t${arr.length}\t${mathjs.mean(arr)}\t${mathjs.std(arr)}\n`);
+  fs.appendFileSync(`./compare_result/${file_name}_0330_adaptive_grid_result.txt`, `${a_id}\t${arr.length}\t${mathjs.mean(arr)}\t${mathjs.std(arr)}\n`);
   // console.log(`adaptive id ${a_id} - ${arr.length} mean: ${mathjs.mean(arr)}(${mathjs.std(arr)})`);
 
 }
@@ -443,7 +483,7 @@ for (let a_id in adaptive_big_grid_infos) {
   // }
   // console.log(`adaptive big - ${a_id}`)
 
-  // fs.appendFileSync(`./compare_result/${file_name}_0330_adaptive_big_grid_result.txt`, `${a_id}\t${arr.length}\t${mathjs.mean(arr)}\t${mathjs.std(arr)}\n`);
+  fs.appendFileSync(`./compare_result/${file_name}_0330_adaptive_big_grid_result.txt`, `${a_id}\t${arr.length}\t${mathjs.mean(arr)}\t${mathjs.std(arr)}\n`);
   // console.log(`adaptive id ${a_id} - ${arr.length} mean: ${mathjs.mean(arr)}(${mathjs.std(arr)})`);
 
 }
@@ -454,6 +494,6 @@ for (let a_id in adaptive_small_grid_infos) {
   // }
   // console.log(`adaptive small - ${a_id}`)
 
-  // fs.appendFileSync(`./compare_result/${file_name}_0330_adaptive_small_grid_result.txt`, `${a_id}\t${arr.length}\t${mathjs.mean(arr)}\t${mathjs.std(arr)}\n`);
+  fs.appendFileSync(`./compare_result/${file_name}_0330_adaptive_small_grid_result.txt`, `${a_id}\t${arr.length}\t${mathjs.mean(arr)}\t${mathjs.std(arr)}\n`);
   // console.log(`adaptive id ${a_id} - ${arr.length} mean: ${mathjs.mean(arr)}(${mathjs.std(arr)})`);
 }
