@@ -54,7 +54,7 @@ function getGridSize(x, y, grid_infos) {
   }
   return -1;
 }
-function getStaticGridId(x, y) {
+function getStaticGridId(video_x, video_y, x, y) {
   let GRID_X_SIZE = video_x / 10;
   let GRID_Y_SIZE = video_y / 10;
 
@@ -72,6 +72,7 @@ function getStaticGridId(x, y) {
   return grid_id
 
 }
+exports.getStaticGridId = getStaticGridId;
 function getXY(video_x, video_y, area_id, split_cnt) {
   let key = area_id.split('0');
   let x_size = video_x / split_cnt;
@@ -95,7 +96,7 @@ function func(x, y, len_x, len_y, key, arr, result_ary) {
     for (let i = 0 ; i < user_arr.length ; i ++) {
       user_sizes.push(user_arr[i].size);
     }
-    sizes.push(mathjs.min(user_sizes));
+    sizes.push(mathjs.mean(user_sizes));
   }
 
   // for (let i = 0; i < ary.length; i++) {

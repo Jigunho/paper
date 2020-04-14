@@ -3,7 +3,7 @@ const _ = require('lodash');
 const mathjs = require('mathjs')
 
 const funcSet = require('./modules/function');
-const split_m = 0
+const split_m = 0.5
 // let video_x = 360;  // 
 // let video_y = 240; // 사거리(4801)
 let video_x = 960;  // 
@@ -24,7 +24,7 @@ let grid_result_big = {};
 let grid_result_intersect = {};
 
 let log_ary = [];
-let log_prev_ary = [];
+
 for (let i = 0; i < u_lines.length; i++) {
   let cols = u_lines[i].split('\t');
 
@@ -37,21 +37,11 @@ for (let i = 0; i < u_lines.length; i++) {
     // funcSet.getAreaId
     let a_id = funcSet.getAreaId(parseInt(cols[9]), parseInt(cols[10]), parseInt(cols[5]), parseInt(cols[6]));
     let obj = { timestamp: parseInt(cols[1]), x: parseInt(cols[5]), y: parseInt(cols[6]), width, height, size, object_id: cols[2], static_id: cols[4], area_id: a_id }
-    log_prev_ary.push(obj);
+    log_ary.push(obj);
 
   } else {
   }
 }
-let tmp_object = _.groupBy(log_prev_ary, 'object_id');
-for (let user_id in tmp_object) {
-  let arr = tmp_object[user_id];
-  for (let i = 0 ; i < arr.length ; i ++) {
-    if (i%2===0) {
-      log_ary.push(arr[i]);
-    }
-  }
-}
-
 
 let area_size_logs = {};
 
@@ -144,9 +134,9 @@ for (let area_id in area_median_result) {
 
 // }
 
-const print_target_id = `199`;
-// let target_ids = ['141', '199', '396', '448','497', '763', '765', '892', '1049', '1074', '1164', '1199', '1210', '1278', '1403', '1439', '1453']; // 차량
-let target_ids = ['8', '21', '25', '29', '35', '40', '45', '56', '75', '134', '168', '186', '231', '232', '241', '269', '347']; // 사람
+const print_target_id = `21`;
+let target_ids = ['141', '199', '396', '448','497', '763', '765', '892', '1049', '1074', '1164', '1199', '1210', '1278', '1403', '1439', '1453']; // 차량
+// let target_ids = ['8', '21', '25','29','35','40','45','56','75','134','168','186','231','232','241','269','347']; // 사람
 
 let targets_logs = {};
 
@@ -158,6 +148,10 @@ let excel_logs1 = [];
 let excel_logs2 = [];
 
 
+let static_grid_infos = {}; // 그리드별 
+let adaptive_grid_infos = {};
+
+
 let user_obj_ary = _.groupBy(log_ary, 'object_id');
 for (let user_id in user_obj_ary) {
 
@@ -165,7 +159,7 @@ for (let user_id in user_obj_ary) {
     continue;
   }
   let arr = user_obj_ary[user_id];
-
+  
   targets_logs[user_id] = JSON.parse(JSON.stringify(arr));
 
 }
@@ -266,7 +260,7 @@ for (let target_id in targets_logs) {
       }
     }
     if (target_id === print_target_id) {
-      let obj = { x: start_x, y: start_y, w: static_video_x, h: static_video_y }
+      let obj = { x: start_x, y: start_y, w: static_video_x, h: static_video_y}
       print_static_grids.push(obj)
     }
 
@@ -292,7 +286,7 @@ for (let target_id in targets_logs) {
   for (let area_id in user_area_logs) {
     let area_arr = user_area_logs[area_id];
     let sizes = [];
-    for (let a = 0; a < area_arr.length; a++) {
+    for (let a = 0 ; a < area_arr.length ; a ++) {
       sizes.push(area_arr[a].size);
     }
 
@@ -332,19 +326,35 @@ for (let target_id in targets_logs) {
     let mean_x = (arr[j].x + arr[j - 1].x) / 2;
     let mean_y = (arr[j].y + arr[j - 1].y) / 2;
 
-    let mean_width = (arr[j].width + arr[j - 1].width) / 2;
-    let mean_height = (arr[j].height + arr[j - 1].height) / 2;
+    let mean_width = (arr[j].width + arr[j-1].width) / 2;
+    let mean_height = (arr[j].height + arr[j-1].height) / 2;
 
     if (target_id === print_target_id) {
-
-      let obj = { x: mean_x - mean_width / 2, y: mean_y - mean_height / 2, w: mean_width, h: mean_height };
+      
+      let obj = { x: mean_x - mean_width/2, y: mean_y - mean_height/2 , w: mean_width, h: mean_height };
       print_reals.push(obj)
     }
 
 
 
-    // const target_split = { 101: 1, 102: 1, 103: 1, 104: 2, 201: 1, 202: 1, 203: 2, 204: 2, 301: 0, 302: 2, 303: 2, 304: 1, 401: 1, 402: 2, 403: 1, 404: 1 };
+    ////////////////////////    고정 그리드의  그리드별 오차율을 구하기 위한         //////////////////// 
+    let s_id = funcSet.getStaticGridId(video_x, video_y, mean_x, mean_y)
+    let s = -1;
+    if (arr[j].size <= static_grid_size) {
+      s = 1 - arr[j].size / static_grid_size
+      // static_small += 1;
+    } else {
+      // static_big += 1;
+      s = 1 - static_grid_size / arr[j].size
+    }
+    if (!static_grid_infos[s_id]) {
+      static_grid_infos[s_id] = [s]
+    } else {
+      static_grid_infos[s_id].push(s);
+    }
 
+
+    
     let u_area_result = user_area_result[arr[j].area_id]
 
     let r = -1;
@@ -356,6 +366,9 @@ for (let target_id in targets_logs) {
       r = funcSet.getGridId(mean_x, mean_y, grid_result_big)
       g_info = funcSet.getTargetGridInfo(arr[j].area_id, grid_result_big);
       g_size = funcSet.getGridSizeKey(r, grid_result_big);
+
+
+
 
     } else if (u_area_result === 0) {
       // small
@@ -370,21 +383,38 @@ for (let target_id in targets_logs) {
       g_size = funcSet.getGridSizeKey(r, grid_result_intersect);
 
     }
+   
+ 
+
+    
 
     if (r == -1 || g_size === -1 || g_size === undefined) {
 
-      if (target_id === print_target_id)
-        console.log(`grid_id:${r}, x,y(${mean_x},${mean_y}) grid_size:${g_size})`);
-      // break;
     } else {
-      // g_size = g_size.grid_size;
       // console.log(`gsize: ${JSON.stringify(g_size)}`)
       // console.log('grid math success')
       // user_adaptives.push(r);
 
       user_adaptive_grids.push(g_size);
 
+      let adaptive_grid_size = g_size.grid_size;
 
+
+      let s0 = -1;
+      if (arr[j].size <= adaptive_grid_size) {
+        s0 = 1 - arr[j].size / adaptive_grid_size;
+        // adaptive_big_small += 1;
+      } else {
+        s0 = 1 - adaptive_grid_size / arr[j].size;
+        // adaptive_big_big += 1;
+      }
+      if (!adaptive_grid_infos[r]) {
+        adaptive_grid_infos[r] = [s0];
+      } else {
+        adaptive_grid_infos[r].push(s0);
+      } 
+
+    
     }
   }
   // console.log(`${target_id} adaptive: ${JSON.stringify(user_adaptive_grids)}`);
@@ -394,15 +424,12 @@ for (let target_id in targets_logs) {
   let dup_ids = [];
   for (let g = 0; g < user_adaptive_grids.length; g++) {
     // console.log(user_adaptive_grids[g].id)
-
+    
     if (dup_ids.includes(user_adaptive_grids[g].id)) {
       continue;
     } else {
       dup_ids.push(user_adaptive_grids[g].id);
-
-      if (target_id === print_target_id) {
-        print_adaptive_grids.push(user_adaptive_grids[g])
-      }
+  
 
     }
     let a_start_x = Math.floor(user_adaptive_grids[g].x);
@@ -419,13 +446,6 @@ for (let target_id in targets_logs) {
 
   }
 
-  if (target_id === print_target_id) {
-    console.log(`target id [${target_id}] - ${dup_ids}`)
-    console.log(`target id [${target_id}] - ${user_static_ids}`)
-
-    console.log(`target id [${target_id}] - ${ccc} ${video_y * video_x}`)
-
-  }
 
   // real 수 세기
   let real_cnt = 0;
@@ -458,7 +478,7 @@ for (let target_id in targets_logs) {
     }
   }
   // console.log(`target ${target_id} include grids : ${user_static_ids}`)
-  let s0 = `static\t${target_id}\t${static_sum_cnt / (video_y * video_x)}\t${real_cnt / (video_x * video_y)}\t${static_intersect_cnt / (video_y * video_x)}\t${only_static_real_cnt / (video_y * video_x)}\t${only_static_cnt / (video_y * video_x)}`;
+  let s0 = `static\t${target_id}\t${static_sum_cnt/(video_y*video_x)}\t${real_cnt / (video_x * video_y)}\t${static_intersect_cnt / (video_y * video_x)}\t${only_static_real_cnt / (video_y * video_x)}\t${only_static_cnt / (video_y * video_x)}`;
   // console.log(s0);
   excel_logs1.push(s0);
 
@@ -483,26 +503,36 @@ for (let target_id in targets_logs) {
   }
 
 
-  let s1 = `adaptive\t${target_id}\t${adaptive_sum_cnt / (video_y * video_x)}\t${real_cnt / (video_x * video_y)}\t${adaptive_intersect_cnt / (video_y * video_x)}\t${only_adaptive_real_cnt / (video_y * video_x)}\t${only_adaptive_cnt / (video_y * video_x)}`;
+  let s1 = `adaptive\t${target_id}\t${adaptive_sum_cnt/(video_y*video_x)}\t${real_cnt / (video_x * video_y)}\t${adaptive_intersect_cnt / (video_y * video_x)}\t${only_adaptive_real_cnt / (video_y * video_x)}\t${only_adaptive_cnt / (video_y * video_x)}`;
 
   excel_logs2.push(s1);
 
 
 }
-
-for (let i = 0; i < excel_logs1.length; i++) {
-  fs.appendFileSync(`./grid_description/${file_name}_${split_m}.txt`, `${excel_logs1[i]}\n`)
-}
-for (let i = 0; i < excel_logs2.length; i++) {
-  fs.appendFileSync(`./grid_description/${file_name}_${split_m}.txt`, `${excel_logs2[i]}\n`)
+for (let r in adaptive_grid_infos) {
+  let str = `${r}\t${adaptive_grid_infos[r].length}\t${mathjs.mean(adaptive_grid_infos[r])}`;
+  fs.appendFileSync(`./grid_description/${file_name}_${split_m}_adaptive_grid.txt`, `${str}\n`)
 }
 
-for (let i = 0; i < print_adaptive_grids.length; i++) {
-  fs.appendFileSync(`./grid_description/${file_name}_adaptive.txt`, `${JSON.stringify(print_adaptive_grids[i])},\n`)
+for (let r in static_grid_infos) {
+  let str = `${r}\t${static_grid_infos[r].length}\t${mathjs.mean(static_grid_infos[r])}`;
+
+  fs.appendFileSync(`./grid_description/${file_name}_${split_m}_static_grid.txt`, `${str}\n`)
+
 }
-for (let i = 0; i < print_reals.length; i++) {
-  fs.appendFileSync(`./grid_description/${file_name}_reals.txt`, `${JSON.stringify(print_reals[i])},\n`)
-}
-for (let i = 0; i < print_static_grids.length; i++) {
-  fs.appendFileSync(`./grid_description/${file_name}_statics.txt`, `${JSON.stringify(print_static_grids[i])},\n`)
-}
+// for (let i = 0 ; i < excel_logs1.length ; i ++) {
+//   fs.appendFileSync(`./grid_description/${file_name}_${split_m}.txt`, `${excel_logs1[i]}\n`)
+// }
+// for (let i = 0 ; i < excel_logs2.length ; i ++) {
+//   fs.appendFileSync(`./grid_description/${file_name}_${split_m}.txt`, `${excel_logs2[i]}\n`)
+// }
+
+// for (let i = 0 ; i < print_adaptive_grids.length ; i ++) {
+//   fs.appendFileSync(`./grid_description/${file_name}_adaptive.txt`, `${JSON.stringify(print_adaptive_grids[i])},\n`)
+// }
+// for (let i = 0 ; i < print_reals.length ; i ++) {
+//   fs.appendFileSync(`./grid_description/${file_name}_reals.txt`, `${JSON.stringify(print_reals[i])},\n`)
+// }
+// for (let i = 0 ; i < print_static_grids.length ; i ++) {
+//   fs.appendFileSync(`./grid_description/${file_name}_statics.txt`, `${JSON.stringify(print_static_grids[i])},\n`)
+// }
