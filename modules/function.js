@@ -119,7 +119,7 @@ function func(x, y, len_x, len_y, key, arr, result_ary) {
 
     return;
 
-  } else if (sizes.length > 5 && sizes.length <= 10) {
+  } else if (sizes.length >= 3 && sizes.length <= 10) {
     result_ary[key] = {
       grid_size: grid_size, x, y, w: len_x, h: len_y, count: sizes.length, key,
       obj_size_mean: mathjs.mean(sizes), obj_size_std: mathjs.std(sizes), ratio: mathjs.std(sizes) / grid_size, filtered: false, id: key

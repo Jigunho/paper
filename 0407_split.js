@@ -6,17 +6,21 @@ const funcSet = require('./modules/function');
 const split_m = 0
 // let video_x = 360;  // 
 // let video_y = 240; // 사거리(4801)
-let video_x = 960;  // 
-let video_y = 540; // japan 거리
+// let video_x = 960;  // 
+// let video_y = 540; // japan 거리
+let video_x = 640; // 현대 0414 올림픽대로
+let video_y = 640;
 let static_grid_size = 96 * 54;
 let static_video_x = video_x / 10;
 let static_video_y = video_y / 10;
 let grid_result = {};
 const split_cnt = 4;
-const file_name = `0327_japan`
+const file_name = `hyundae_0414_olympic`
 const u_lines = fs.readFileSync(`./0303_type/${file_name}.txt`).toString().split('\n');
 
-const target_split = { 101: 1, 102: 1, 103: 1, 104: 2, 201: 1, 202: 1, 203: 2, 204: 2, 301: 1, 302: 2, 303: 2, 304: 1, 401: 1, 402: 2, 403: 1, 404: 1 };
+// const target_split = { 101: 1, 102: 1, 103: 1, 104: 2, 201: 1, 202: 1, 203: 2, 204: 2, 301: 1, 302: 2, 303: 2, 304: 1, 401: 1, 402: 2, 403: 1, 404: 1 };
+const target_split = { 101: 1, 102: 1, 103: 1, 104: 1, 201: 1, 202: 1, 203: 1, 204: 1, 301: 1, 302: 1, 303: 1, 304: 1, 401: 1, 402: 1, 403: 1, 404: 1 };
+
 let area_median_result = {}; // 영역별 객체의 median 값을 저장하기 위한 변수
 
 let grid_result_small = {};
@@ -126,23 +130,23 @@ for (let area_id in area_median_result) {
   }
 
 }
-// for (let a_g_id in grid_result_intersect) {
-//   let grid_result = grid_result_intersect[a_g_id];
-//   // console.log(JSON.stringify(grid_result));
-//   fs.appendFileSync('./0407_grid_result_small.txt', `${JSON.stringify(grid_result)},\n`);
-//   fs.appendFileSync('./0407_grid_result_big.txt', `${JSON.stringify(grid_result)},\n`);
+for (let a_g_id in grid_result_intersect) {
+  let grid_result = grid_result_intersect[a_g_id];
+  // console.log(JSON.stringify(grid_result));
+  fs.appendFileSync(`./${file_name}_grid_result_intersect.txt`, `${JSON.stringify(grid_result)},\n`);
+  // fs.appendFileSync('./0407_grid_result_big.txt', `${JSON.stringify(grid_result)},\n`);
 
-// }
-// for (let a_g_id in grid_result_small) {
-//   let grid_result = grid_result_small[a_g_id];
-//   fs.appendFileSync('./0407_grid_result_small.txt', `${JSON.stringify(grid_result)},\n`);
+}
+for (let a_g_id in grid_result_small) {
+  let grid_result = grid_result_small[a_g_id];
+  fs.appendFileSync(`./${file_name}_grid_result_small.txt`, `${JSON.stringify(grid_result)},\n`);
 
-// }
-// for (let a_g_id in grid_result_big) {
-//   let grid_result = grid_result_big[a_g_id];
-//   fs.appendFileSync('./0407_grid_result_big.txt', `${JSON.stringify(grid_result)},\n`);
+}
+for (let a_g_id in grid_result_big) {
+  let grid_result = grid_result_big[a_g_id];
+  fs.appendFileSync(`./${file_name}_grid_result_big.txt`, `${JSON.stringify(grid_result)},\n`);
 
-// }
+}
 
 const print_target_id = `199`;
 // let target_ids = ['141', '199', '396', '448','497', '763', '765', '892', '1049', '1074', '1164', '1199', '1210', '1278', '1403', '1439', '1453']; // 차량
