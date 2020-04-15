@@ -13,7 +13,7 @@ let static_video_x = video_x / 10;
 let static_video_y = video_y / 10;
 let grid_result = {};
 const split_cnt = 4;
-const file_name = `0327_japan`
+const file_name = `hyundae_0414_olympic`
 const u_lines = fs.readFileSync(`./0303_type/${file_name}.txt`).toString().split('\n');
 
 
@@ -106,5 +106,5 @@ for (let area_id in area_mean_size_logs) {
   }
 
 }
-// fs.appendFileSync(`./0407_${file_name}_area_result.txt`,strs.join('\n'));
+fs.appendFileSync(`./0407_${file_name}_area_result.txt`,strs.join('\n'));
 

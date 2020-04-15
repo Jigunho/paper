@@ -6,17 +6,21 @@ const funcSet = require('./modules/function');
 const split_m = 0
 // let video_x = 360;  // 
 // let video_y = 240; // 사거리(4801)
-let video_x = 960;  // 
-let video_y = 540; // japan 거리
+// let video_x = 960;  // 
+// let video_y = 540; // japan 거리
+let video_x = 640; // 현대 0414 올림픽대로
+let video_y = 640;
 let static_grid_size = 96 * 54;
 let static_video_x = video_x / 10;
 let static_video_y = video_y / 10;
 let grid_result = {};
 const split_cnt = 4;
-const file_name = `0327_japan`
+const file_name = `hyundae_0414_olympic`
 const u_lines = fs.readFileSync(`./0303_type/${file_name}.txt`).toString().split('\n');
 
-const target_split = { 101: 1, 102: 1, 103: 1, 104: 2, 201: 1, 202: 1, 203: 2, 204: 2, 301: 1, 302: 2, 303: 2, 304: 1, 401: 1, 402: 2, 403: 1, 404: 1 };
+// const target_split = { 101: 1, 102: 1, 103: 1, 104: 2, 201: 1, 202: 1, 203: 2, 204: 2, 301: 1, 302: 2, 303: 2, 304: 1, 401: 1, 402: 2, 403: 1, 404: 1 };
+const target_split = { 101: 1, 102: 1, 103: 1, 104: 1, 201: 1, 202: 1, 203: 1, 204: 1, 301: 1, 302: 1, 303: 1, 304: 1, 401: 1, 402: 1, 403: 1, 404: 1 };
+
 let area_median_result = {}; // 영역별 객체의 median 값을 저장하기 위한 변수
 
 let grid_result_small = {};
@@ -562,7 +566,7 @@ for (let user_id in user_movement_logs) {
 
 ////////// 0414_fpminer copy & paste ////////////////
 
-let threshold = 0.3;
+let threshold = 0.15;
 
 
 
@@ -624,12 +628,12 @@ const main = () => {
     }
 
     // console.log(`${a_str_list.length} - ${JSON.stringify(a_str_list)}`)
-    
+
     let group_grid_list = _.groupBy(a_str_list, 'grid_str');
     let grid_list = Object.keys(group_grid_list);
     // console.log(`a list 같고 d id list 같고 str 같은 애들 갯수 `);
     // for (let grid_id_list in group_grid_list) {
-      // console.log(`count: ${ JSON.stringify(group_grid_list[grid_id_list])}`)
+    // console.log(`count: ${ JSON.stringify(group_grid_list[grid_id_list])}`)
     //   console.log(`${grid_id_list}: ${group_grid_list[grid_id_list].length}`)
     // }
     // for (let g_id1 in group_grid_list) {
@@ -653,17 +657,17 @@ const main = () => {
           // console.log('---------------')
           // console.log(`dup removed - ${intersect_list}`);
 
-          
+
           let ratio = intersect_list.length / mathjs.min([user_grid_list1.length, user_grid_list2.length]);
-          console.log(`ratio: ${ratio} dup len: ${intersect_list.length}, i len: ${user_grid_list1.length}, j len: ${user_grid_list2.length}`)
+          // console.log(`ratio: ${ratio} dup len: ${intersect_list.length}, i len: ${user_grid_list1.length}, j len: ${user_grid_list2.length}`)
           if (ratio > threshold) {
             // console.log(`${ratio} , ${dup_removed_concat_list}`);
             let merge_grid = dup_removed_concat_list.join('@');
             merge_grid_list[grid_list[i]] = merge_grid;
             merge_grid_list[grid_list[j]] = merge_grid;
-            console.log(`1단계 병합됨`)
+            // console.log(`1단계 병합됨`)
           } else {
-            console.log(`1단계 병합되지 않음`);
+            // console.log(`1단계 병합되지 않음`);
           }
 
         }
@@ -672,7 +676,7 @@ const main = () => {
 
 
     let signal = true
-    while(signal) {
+    while (signal) {
 
       let cnt = 0;
 
@@ -680,11 +684,11 @@ const main = () => {
         let merged_list1 = merge_grid_list[merged_id1].split('@');
         for (let merged_id2 in merge_grid_list) {
           let merged_list2 = merge_grid_list[merged_id2].split('@');
-          
+
           if (merge_grid_list[merged_id2] === merge_grid_list[merged_id1]) {
             continue;
           }
-          
+
           let concat_list = merged_list1.concat(merged_list2);
           let dup_removed_concat_list = [...new Set(concat_list)];
           let intersect_list = merged_list1.filter(v => merged_list2.includes(v))
@@ -698,12 +702,12 @@ const main = () => {
             merge_grid_list[merged_id2] = merge_grid;
             // delete[merged_id1];
             // delete[merged_id2]
-            console.log(merge_grid)
-            console.log(`2단계 병합됨`);
+            // console.log(merge_grid)
+            // console.log(`2단계 병합됨`);
             cnt += 1;
-            
+
           } else {
-            console.log(`2단계 병합되지 않음`);
+            // console.log(`2단계 병합되지 않음`);
             // signal = false;
           }
 
@@ -714,7 +718,7 @@ const main = () => {
         break;
       }
     }
-    
+
     // a_list d_list 같은 애들을 병합조건으로 수행하였을때 최종적으로 합쳐진 id 갯수가 몇개인지 확인
     let merged_group = {};
     for (let merged_id in merge_grid_list) {
@@ -725,15 +729,23 @@ const main = () => {
         merged_group[merge_grid_list[merged_id]].push(merged_id)
       }
     }
+
+
     for (let id in merged_group) {
-      console.log(`${id} !!!!!!!! ${merged_group[id].length}`)
+      // console.log(`${a_str} group - grid_id:${id} !!!!!!!! ${merged_group[id].length}`)
+      let strs = id.split('@');
+      let ss = '[';
+      for (let i = 0; i < strs.length; i++) {
+        if (i === strs.length - 1) {
+          ss += `\'${strs[i]}\']`
+        } else {
+          ss += `\'${strs[i]}\',`
+        }
+      }
+      console.log(ss)
     }
 
-    // for (let i = 0; i < a_str_list.length; i++) {
-    //   if (merge_grid_list[a_str_list].grid_str) {
 
-    //   }
-    // }
   }
 }
 const getDirectionId = (direction) => {
