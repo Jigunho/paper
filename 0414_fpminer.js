@@ -99,4 +99,4 @@ const getDirectionId = (direction) => {
   return Math.floor(direction / 90)
 }
 
-main();
+// main();

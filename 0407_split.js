@@ -6,21 +6,28 @@ const funcSet = require('./modules/function');
 const split_m = 0
 // let video_x = 360;  // 
 // let video_y = 240; // 사거리(4801)
-// let video_x = 960;  // 
-// let video_y = 540; // japan 거리
-let video_x = 640; // 현대 0414 올림픽대로
-let video_y = 640;
-let static_grid_size = 96 * 54;
+let video_x = 960;  // 
+let video_y = 540; // japan 거리
+// let video_x = 640; // 현대 0414 올림픽대로
+// let video_y = 640;
+// let video_x = 320; // T 3거리 
+// let video_y = 180;
+// let video_x = 360; // highway
+// let video_y = 240;
+// let static_grid_size = 96 * 54;
 let static_video_x = video_x / 10;
 let static_video_y = video_y / 10;
 let grid_result = {};
 const split_cnt = 4;
-const file_name = `hyundae_0414_olympic`
+const file_name = `0327_japan`
 const u_lines = fs.readFileSync(`./0303_type/${file_name}.txt`).toString().split('\n');
 
-// const target_split = { 101: 1, 102: 1, 103: 1, 104: 2, 201: 1, 202: 1, 203: 2, 204: 2, 301: 1, 302: 2, 303: 2, 304: 1, 401: 1, 402: 2, 403: 1, 404: 1 };
-const target_split = { 101: 1, 102: 1, 103: 1, 104: 1, 201: 1, 202: 1, 203: 1, 204: 1, 301: 1, 302: 1, 303: 1, 304: 1, 401: 1, 402: 1, 403: 1, 404: 1 };
-
+const target_split = { 101: 1, 102: 1, 103: 1, 104: 2, 201: 1, 202: 1, 203: 2, 204: 2, 301: 1, 302: 2, 303: 2, 304: 1, 401: 1, 402: 2, 403: 1, 404: 1 };
+// japan
+// const target_split = { 101: 1, 102: 2, 103: 2, 104: 1, 201: 1, 202: 2, 203: 2, 204: 1, 301: 1, 302: 2, 303: 2, 304: 1, 401: 1, 402: 2, 403: 2, 404: 1 };
+// T 
+// const target_split = { 101: 1, 102: 1, 103: 1, 104: 1, 201: 1, 202: 1, 203: 1, 204: 1, 301: 1, 302: 1, 303: 1, 304: 1, 401: 1, 402: 1, 403: 1, 404: 1 };
+// high
 let area_median_result = {}; // 영역별 객체의 median 값을 저장하기 위한 변수
 
 let grid_result_small = {};
@@ -133,22 +140,17 @@ for (let area_id in area_median_result) {
 for (let a_g_id in grid_result_intersect) {
   let grid_result = grid_result_intersect[a_g_id];
   // console.log(`intersect ${JSON.stringify(grid_result)}`);
-  // fs.appendFileSync('./0407_grid_result_small.txt', `${JSON.stringify(grid_result)},\n`);
-  // fs.appendFileSync('./0407_grid_result_big.txt', `${JSON.stringify(grid_result)},\n`);
+  // fs.appendFileSync(`./${file_name}_grid_result_intersect.txt`, `${JSON.stringify(grid_result)},\n`);
 
 }
 for (let a_g_id in grid_result_small) {
   let grid_result = grid_result_small[a_g_id];
-  // console.log(`small ${JSON.stringify(grid_result)}`);
-
-  // fs.appendFileSync('./0407_grid_result_small.txt', `${JSON.stringify(grid_result)},\n`);
+  // fs.appendFileSync(`./${file_name}_grid_result_small.txt`, `${JSON.stringify(grid_result)},\n`);
 
 }
 for (let a_g_id in grid_result_big) {
   let grid_result = grid_result_big[a_g_id];
-  // console.log(`big ${JSON.stringify(grid_result)}`);
-
-  // fs.appendFileSync('./0407_grid_result_big.txt', `${JSON.stringify(grid_result)},\n`);
+  // fs.appendFileSync(`./${file_name}_grid_result_big.txt`, `${JSON.stringify(grid_result)},\n`);
 
 }
 
@@ -171,9 +173,9 @@ let excel_logs2 = [];
 let user_obj_ary = _.groupBy(log_ary, 'object_id');
 for (let user_id in user_obj_ary) {
 
-  if (!target_ids.includes(user_id)) {
-    continue;
-  }
+  // if (!target_ids.includes(user_id)) {
+  //   continue;
+  // }
   let arr = user_obj_ary[user_id];
 
   targets_logs[user_id] = JSON.parse(JSON.stringify(arr));
@@ -533,36 +535,71 @@ for (let target_id in targets_logs) {
 // 0414 fpminer 에 넣을 user_id 유저별 영역트랜잭션, 가변그리드 트랜잭션, 영역 방향 트랜잭션 을 담은 결과 데이터
 
 let user_movement_result = []
+let grid_count = Object.keys(grid_result_intersect).length; // total grid count
+let grid_count_big = Object.keys(grid_result_big).length;
+let grid_count_small = Object.keys(grid_result_small).length;
+console.log(`${grid_count + grid_count_big + grid_count_small} , (${grid_count}), (${grid_count_big}),(${grid_count_small})`);
+let threshold_0 = 0;
 
-for (let user_id in user_movement_logs) {
-  let user_arr = user_movement_logs[user_id];
-  let area_groups = _.groupBy(user_arr, 'area_id');
-  let area_direction_mean_result = {};
-  let area_ids = []
-  let area_directions = [];
-  let a_list = []
-  for (let area_id in area_groups) {
-    let area_logs = area_groups[area_id];
-    let directions = [];
-    for (let i = 0; i < area_logs.length; i++) {
-      directions.push(area_logs[i].direction);
+// for (let user_id in user_movement_logs) {
+//   let user_arr = user_movement_logs[user_id];
+//   let area_groups = _.groupBy(user_arr, 'area_id');
+//   let area_direction_mean_result = {};
+//   let area_ids = []
+//   let area_directions = [];
+//   let a_list = []
+//   for (let area_id in area_groups) {
+//     let area_logs = area_groups[area_id];
+//     let directions = [];
+//     for (let i = 0; i < area_logs.length; i++) {
+//       directions.push(area_logs[i].direction);
 
-    }
-    area_ids.push(area_id);
-    a_list.push({ area_id, direction: mathjs.mean(directions) });
-    area_directions.push(mathjs.mean(directions));
-    // area_direction_mean_result[area_id] = Math.mean(directions);
-  }
-  let grid_lists = [];
-  for (let g = 0; g < user_arr.length; g++) {
-    grid_lists.push(user_arr[g].grid_id);
-  }
-  grid_lists = [...new Set(grid_lists)]
-  let o = { user_id, grid_lists, area_list: a_list };
-  user_movement_result.push(o);
-  // fs.appendFileSync('./user_result.txt',`${JSON.stringify(o)}\n`);
-}
+//     }
+//     area_ids.push(area_id);
+//     a_list.push({ area_id, direction: mathjs.mean(directions) });
+//     area_directions.push(mathjs.mean(directions));
+//     // area_direction_mean_result[area_id] = Math.mean(directions);
+//   }
+//   let grid_lists = [];
+//   for (let g = 0; g < user_arr.length; g++) {
+//     grid_lists.push(user_arr[g].grid_id);
+//   }
+//   grid_lists = [...new Set(grid_lists)]
+//   let o = { user_id, grid_lists, area_list: a_list };
+//   user_movement_result.push(o);
+//   // fs.appendFileSync('./user_result.txt',`${JSON.stringify(o)}\n`);
+// }
 
+// let cnt = 0;
+// let frequent_results_ = _.groupBy(user_movement_result, 'grid_lists');
+// let f_r_keys = Object.keys(frequent_results_);
+// f_r_keys.sort(function(a,b) {
+//   return a-b;
+// });
+// let frequent_results = {};
+// for (let k = 0 ; k < f_r_keys.length ; k ++) {
+//   frequent_results[f_r_keys[k]] = frequent_results_[f_r_keys[k]]
+// }
+// for (let id in frequent_results) {
+//   if (frequent_results[id].length > 2) {
+    
+//     let ids = id.split(',');
+//     if (ids.length < threshold_0 * grid_count) {
+//       continue;
+//     }
+//     cnt += 1;
+
+//     ids.sort(function (a, b) {
+//       return a - b;
+//     })
+//     // console.log(ids);
+//     // fs.appendFileSync('./0428_result.txt', `${frequent_results[id].length} - ${JSON.stringify(ids)}\n`)
+
+//   }
+// }
+// console.log(`total cnt : ${Object.keys(frequent_results).length}`)
+// console.log(`upper cnt : ${cnt}`)
+// console.log(`grid cnt: ${grid_count}`)
 
 ////////// 0414_fpminer copy & paste ////////////////
 
@@ -623,9 +660,30 @@ const main = () => {
   let merge_grid_list = {};
   for (let a_str in group) {
     let a_str_list = group[a_str]; // 같은 영역, 같은 방향을 가진 객체들
+    // console.log(a_str_list)
+    // 0416 그냥 그룹 같은 애들 병합 
+    let sum_arr = [];
+    for (let i = 0; i < a_str_list.length; i++) {
+      sum_arr = sum_arr.concat(a_str_list[i].grid_lists);
+    }
+    sum_arr = [...new Set(sum_arr)]
+    let ss = '[';
+    for (let i = 0; i < sum_arr.length; i++) {
+      if (i === sum_arr.length - 1) {
+        ss += `\'${sum_arr[i]}\']`
+      } else {
+        ss += `\'${sum_arr[i]}\',`
+      }
+    }
+    // console.log(`group: ${a_str}, list: ${ss}`);
+    // continue;
+
     if (!(a_str_list.length > 1)) {
       continue;
     }
+
+
+
 
     // console.log(`${a_str_list.length} - ${JSON.stringify(a_str_list)}`)
 
@@ -742,14 +800,15 @@ const main = () => {
           ss += `\'${strs[i]}\',`
         }
       }
-      console.log(ss)
+      console.log(`merged - ${ss}`)
     }
 
 
   }
 }
+
 const getDirectionId = (direction) => {
   return Math.floor(direction / 90)
 }
 
-main();
+// main();

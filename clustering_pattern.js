@@ -3,10 +3,11 @@ const _ = require('lodash');
 const mathjs = require('mathjs');
 const getIdModule = require('./modules/make_area');
 const lines = fs.readFileSync(`./4801_cluster_result_area.csv`).toString().split('\n');
-
+// 1. 파이썬에서 추출한 영역별 클러스터 id 가 들어있는 csv
+// 2. 
 console.log(lines.length);
 
-let video_x = 360;  // 
+let video_x = 360;  // s
 let video_y = 240; // 사거리(4801)
 let split_cnt = 3;
 let cell_size = video_x / split_cnt * video_y / split_cnt; // 864

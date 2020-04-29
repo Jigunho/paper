@@ -1,6 +1,6 @@
 const _ = require('lodash')
 const mathjs = require('mathjs')
-const split_m = 0
+const split_m = 0.5
 function getGridSizeKey(id, grid_infos) {
   return grid_infos[id];
 }

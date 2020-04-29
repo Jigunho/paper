@@ -21,9 +21,8 @@ let grid_ratio_ary = {};
 
 let video_x = 960;
 let video_y = 540;
-let grid_size = (video_x / 10) * (video_y / 10);
-let area_size = (video_y / 4) * (video_x / 4);
-let object_type = '20'
+// let grid_size = (video_x / 10) * (video_y / 10);
+// let area_size = (video_y / 4) * (video_x / 4);
 for (let i = 0; i < lines.length; i++) {
   let cols = lines[i].split('\t');
   // if (cols[3] !== object_type) {
@@ -37,7 +36,7 @@ for (let i = 0; i < lines.length; i++) {
     let obj = {
       camera_id: cols[0], timestamp: parseInt(cols[1]), object_id: cols[2], object_type:
         cols[3], static_grid_id: cols[4], x: parseInt(cols[5]), y: parseInt(cols[6]), width: parseInt(cols[7]),
-         height: parseInt(cols[8]), video_x: cols[9], video_y: cols[10], size
+      height: parseInt(cols[8]), video_x: cols[9], video_y: cols[10], size
     }
     let obj_x = obj.x;
     let obj_y = obj.y;
@@ -55,13 +54,8 @@ for (let i = 0; i < lines.length; i++) {
     }
     let a_id = getIdModule.getAreaId(video_x, video_y, obj_x, obj_y);
     let g_id = getIdModule.getGridId(video_x, video_y, obj_x, obj_y);
-    // if (obj.static_grid_id.length < 3) {
-    //   continue;
-    // }
-    // console.log(`${obj.static_grid_id},  x:${obj_x}, y:${obj_y} ,a_id:${a_id}, g_id:${g_id},`);
     obj['a_id'] = a_id;
     obj['g_id'] = g_id;
-    // console.log(JSON.stringify(obj))
     first_ary.push(obj);
 
   } else {
@@ -70,7 +64,6 @@ for (let i = 0; i < lines.length; i++) {
 
 }
 
-let start_end_same_user = 0;
 let obj_type_id_ary = _.groupBy(first_ary, 'object_id');
 console.log(`obj ids : ${Object.keys(obj_type_id_ary).length}`);
 let ids = Object.keys(obj_type_id_ary);
@@ -132,7 +125,7 @@ for (let i = 0; i < ids.length; i++) {
       size: arr[j].size, object_type: arr[j].object_type, x: arr[j].x, y: arr[j].y, width: arr[j].width, height: arr[j].height,
       video_x: arr[j].video_x, video_y: arr[j].video_y, camera_id: arr[j].camera_id, a_id: arr[j].a_id
     };
-    // console.log(arr[j].a_id)
+
     if (!static_area_result[arr[j].a_id]) {
       static_area_result[arr[j].a_id] = [{ static_log_obj }];
     } else {
@@ -155,10 +148,6 @@ for (let i = 0; i < ids.length; i++) {
 
 let all_car_type = 0;
 let all_person_type = 0;
-// let grid_user_list = _.groupBy(second_ary, 'a_id');
-// console.log(`area ids : ${Object.keys(grid_user_list)}`);
-
-// let grid_ids = Object.keys(grid_user_list);
 let strs = ''
 
 for (let area_id in static_area_result) {
@@ -166,7 +155,6 @@ for (let area_id in static_area_result) {
   if (!arr) {
     continue;
   }
-  // console.log(`${area_id}, len: ${arr.length}`)
   let user_min_size = {}
   let user_size_ary = {};
   let user_type = {};
@@ -180,7 +168,6 @@ for (let area_id in static_area_result) {
   if (arr.length < 2) {
     continue;
   }
-  let car_type = 0;
 
   for (let j = 1; j < arr.length; j++) {
 
@@ -190,7 +177,7 @@ for (let area_id in static_area_result) {
       user_size_ary[arr[j].object_id].push(arr[j].size);
     }
 
-    if(!user_direction_ary[arr[j].object_id]) {
+    if (!user_direction_ary[arr[j].object_id]) {
       user_direction_ary[arr[j].object_id] = [arr[j].direction]
     } else {
       user_direction_ary[arr[j].object_id].push(arr[j].direction);
@@ -246,13 +233,13 @@ for (let area_id in static_area_result) {
   let vel_std = mathjs.std(vels);
   for (let l = 0; l < lens.length; l++) {
     let user_info = user_infos[lens[l]];
-    if (mathjs.mean(user_size_ary[lens[l]]) < size_mean + 2.5 * size_std ) {
-      let ratio = mathjs.mean(user_size_ary[lens[l]]) / ((video_x / 4) * (video_y / 4)) 
+    if (mathjs.mean(user_size_ary[lens[l]]) < size_mean + 2.5 * size_std) {
+      let ratio = mathjs.mean(user_size_ary[lens[l]]) / ((video_x / 4) * (video_y / 4))
       let str = `${area_id},${ratio},${lens[l]},${user_type[lens[l]]},${user_min_size[lens[l]]},${user_min_vel[lens[l]]},${mathjs.mean(user_vels[lens[l]])},${user_max_vel[lens[l]]},${user_info.x},${user_info.y},${mathjs.max(user_direction_ary[lens[l]])},${mathjs.min(user_direction_ary[lens[l]])},${mathjs.mean(user_direction_ary[lens[l]])},${mathjs.std(user_direction_ary[lens[l]])}\n`
       strs += str;
 
 
-      
+
       if (!area_ratio_ary[area_id]) {
         area_ratio_ary[area_id] = [ratio]
       } else {
@@ -399,12 +386,12 @@ for (grid_id in area_ratio_ary) {
   let size_std = mathjs.std(arr);
   // console.log(`${grid_id} ${size_mean}(${size_std})`);
   let up_count = 0;
-  let down_count = 0 ;
-  for (let i  = 0; i < arr.length; i ++){
-    if (arr[i] > size_mean + size_std * 1.5)  {
-      up_count ++;
-    } else if (arr[i] < size_mean  - (size_std  )) {
-      down_count ++;
+  let down_count = 0;
+  for (let i = 0; i < arr.length; i++) {
+    if (arr[i] > size_mean + size_std * 1.5) {
+      up_count++;
+    } else if (arr[i] < size_mean - (size_std)) {
+      down_count++;
     }
   }
   // console.log(`${grid_id} , ${arr.length} , up:${up_count/arr.length} down:${down_count/arr.length}`)
@@ -529,3 +516,25 @@ for (grid_id in area_ratio_ary) {
 // fs.appendFileSync(`./grid_raw_logs/${file_name}_down_person.txt`,strs3);
 // fs.appendFileSync(`./grid_raw_logs/${file_name}_up.txt`,strs2);
 // fs.appendFileSync(`./grid_raw_logs/${file_name}_down.txt`,strs1);
+
+
+// 787	1566164088000	CZWEeKNZVbvU2w8I+4K63CyDI4s3y5FQILKRLvzR2Ln9ZyA1eAPy5Vir3b7W/73H	1	1	0402	295	588	15	15	1	1	640	640
+// 788	1566164091000	CZWEeKNZVbvU2w8I+4K63CyDI4s3y5FQILKRLvzR2Ln9ZyA1eAPy5Vir3b7W/73H	1	1	0402	279	630	15	15	1	1	640	640
+
+
+// 16513214504800	1583237917645	908	20	703	225	83	9	5	360	240
+// FRAME   1566204882000   21      1       16513214504700  0104    306     110     1       1       1       1       640     640
+//           id     timestamp object_id, object_type, camera_id, grid_id, objectX, object Y , width, height, size , videoX, videoY
+let str = `${i + 1}\t${ddd[0]}\t${ddd[2]}\t${1}\t${1}\t${ll2}${ll1}\t${videoX}\t${videoY}\t${15}\t${15}\t1\t1\t${width}\t${height}\n`;
+
+let strs = [];
+strs.push('12345')
+strs.push(ddd[0]);
+strs.push(`${ll2}${ll1}`);
+strs.push('20');
+strs.push(videoX);
+strs.push(videoY);
+strs.push('15');
+strs.push('15')
+strs.push(width);
+strs.push(height)

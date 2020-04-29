@@ -6,14 +6,15 @@ const funcSet = require('./modules/function');
 const split_m = 0
 // let video_x = 360;  // 
 // let video_y = 240; // 사거리(4801)
-let video_x = 960;  // 
-let video_y = 540; // japan 거리
-let static_grid_size = 96 * 54;
+// let video_x = 960;  // 
+// let video_y = 540; // japan 거리
+let video_x = 320;  // 
+let video_y = 180; // japan 거리
 let static_video_x = video_x / 10;
 let static_video_y = video_y / 10;
 let grid_result = {};
 const split_cnt = 4;
-const file_name = `hyundae_0414_olympic`
+const file_name = `0425_T_car`
 const u_lines = fs.readFileSync(`./0303_type/${file_name}.txt`).toString().split('\n');
 
 
@@ -106,5 +107,5 @@ for (let area_id in area_mean_size_logs) {
   }
 
 }
-fs.appendFileSync(`./0407_${file_name}_area_result.txt`,strs.join('\n'));
+fs.appendFileSync(`./${file_name}_area_result.txt`,strs.join('\n'));
 
