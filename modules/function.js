@@ -196,4 +196,32 @@ exports.getAreaId = (video_x, video_y, x, y) => {
 
 
 }
+exports.getAreaId3 = (video_x, video_y, x, y) => {
+  if (x > video_x) {
+    x = video_x -1;
+  } 
+  if ( x <= 0) {
+    x = 1;
+  }
+  if (y > video_y) {
+    y = video_y -1;
+  }
+  if (y <= 0) {
+    y = 1;
+  }
+  if(isNaN(video_x)) {
+    return false;
+  }
+  let AREA_X_SIZE = video_x / 3;
+  let AREA_Y_SIZE = video_y / 3;
+  let area_x = Math.ceil(x / AREA_X_SIZE);
+  let area_y = Math.ceil(y / AREA_Y_SIZE);
+  let area_id = `${area_x}0${area_y}`;
+  // console.log(`${video_x}, ${video_y}, ${x}, ${y} - ${area_id}`)
+
+  return area_id
+
+
+
+}
 exports.func = func;

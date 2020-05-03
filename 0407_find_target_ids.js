@@ -6,15 +6,21 @@ const funcSet = require('./modules/function');
 const split_m = 0
 // let video_x = 360;  // 
 // let video_y = 240; // 사거리(4801)
-let video_x = 960;  // 
-let video_y = 540; // japan 거리
+// let video_x = 960;  // 
+// let video_y = 540; // japan 거리
+// let video_x = 320; // T 3거리 
+// let video_y = 180;
+let video_x = 360; // highway
+let video_y = 240;
+
 let static_grid_size = 96 * 54;
 let static_video_x = video_x / 10;
 let static_video_y = video_y / 10;
 let grid_result = {};
 const split_cnt = 4;
-const file_name = `0327_japan`
+const file_name = `0425_highway30min`  // 0425_highway30min ,, 0425_T_car ,, 4801
 let log_ary = [];
+let log_prev_ary = [];
 const u_lines = fs.readFileSync(`./0303_type/${file_name}.txt`).toString().split('\n');
 
 for (let i = 0; i < u_lines.length; i++) {
@@ -26,48 +32,143 @@ for (let i = 0; i < u_lines.length; i++) {
   if (!isNaN(size)) {
 
     let a_id = funcSet.getAreaId(parseInt(cols[9]), parseInt(cols[10]), parseInt(cols[5]), parseInt(cols[6]));
-    let obj = { timestamp: parseInt(cols[1]), x: parseInt(cols[5]), y: parseInt(cols[6]), width, height, size, object_id: cols[2], static_id: cols[4], area_id: a_id }
-    log_ary.push(obj);
+    let obj = { timestamp: parseInt(cols[1]), x: parseInt(cols[5]), y: parseInt(cols[6]), width, height, size, object_id: cols[2], grid_id: cols[4], area_id: a_id }
+    log_prev_ary.push(obj);
 
   } else {
   }
 }
-let obj_group_result = _.groupBy(log_ary, 'object_id');
-// let include_static_grid_ids = ['207', '208', '307', '308', '407', '408']; // 차량
-// let include_static_grid_ids = ['205','204','305','304','404','603','604'] // 사람
-// let include_static_area_ids = ['104','204','304','404'] // 0425_T_car 사람
-let include_static_area_ids = ['203','303','403'] // 0425_T_car 사람
 
+let obj_cnt = 0;
+
+let tmp_object = _.groupBy(log_prev_ary, 'object_id');
+for (let user_id in tmp_object) {
+  let arr = tmp_object[user_id];
+  arr.sort(function (a, b) {
+    return a.timestamp - b.timestamp
+  })
+
+  let log_ts = [];
+  let grid_dup_removed = [];
+  for (let j = 1; j < arr.length; j++) {
+
+    if (arr[j].x === arr[j - 1].x || arr[j].y === arr[j - 1].y) {
+      continue;
+    }
+    let velocity = Math.sqrt( Math.pow(arr[j].y - arr[j-1].y, 2) + Math.pow(arr[j].x - arr[j-1].x, 2)) / ( arr[j] .timestamp - arr[j-1].timestamp ) * 100;
+
+    let direction = Math.atan2(arr[j - 1].y - arr[j].y, arr[j].x - arr[j - 1].x) * 180 / Math.PI;
+    direction = (direction + 360) % 360;
+
+    let mean_x = (arr[j].x + arr[j - 1].x) / 2;
+    let mean_y = (arr[j].y + arr[j - 1].y) / 2;
+
+    let size_mean = (arr[j].size + arr[j - 1].size) / 2;
+
+    log_ts.push({ object_id: user_id, x: mean_x, y: mean_y, direction, velocity, size: size_mean, area_id: arr[j].area_id, grid_id: arr[j].grid_id })
+  
+    if (!grid_dup_removed.includes(arr[j].grid_id)) {
+      grid_dup_removed.push(arr[j].grid_id);
+    }
+  }
+
+  if (grid_dup_removed.length > 3) {
+    for (let i = 0; i < log_ts.length; i++) {
+      log_ary.push(log_ts[i]);
+    } 
+    obj_cnt += 1;
+  }
+}
+
+let obj_group_result = _.groupBy(log_ary, 'object_id');
+
+// let p_include_area_ids = ['102','103','202','302']; // japan 사람
+// let c_include_area_ids = ['104','204','203','303','402'] // japan car
+// let user_ids = [];
+// let car_ids = [];
+// for (let user_id in obj_group_result) {
+//   let arr = obj_group_result[user_id];
+
+//   let cnt = 0;
+//   let user_includes = [];
+//   let sizes = [];
+//   let user_areas = [];
+//   for (let i = 0 ; i < arr.length ; i ++) {
+//     user_areas.push(arr[i].area_id);
+//   }
+//   let dup_removed_areas = [...new Set(user_areas)];
+//   let is = dup_removed_areas.filter(x => p_include_area_ids.includes(x));
+//   if (is.length >= 3) {
+//     user_ids.push(user_id);
+//   }
+
+//   let is2 = dup_removed_areas.filter(x => c_include_area_ids.includes(x));
+//   if (is2.length >= 3) {
+//     car_ids.push(user_id);
+//   }
+
+
+// }
+// console.log(`${car_ids.length} ${user_ids.length} ${Object.keys(obj_group_result).length}`);
+// fs.appendFileSync('./0425_ids.txt', `${car_ids.join(',')}\n`)
+// fs.appendFileSync('./0425_ids.txt', user_ids.join(','))
+
+
+
+// let p_include_area_ids = ['203','303','403']; // T car
+// // let c_include_area_ids = ['] // japan car
+// let user_ids = [];
+// let car_ids = [];
+// for (let user_id in obj_group_result) {
+//   let arr = obj_group_result[user_id];
+
+//   let cnt = 0;
+//   let user_includes = [];
+//   let sizes = [];
+//   let user_areas = [];
+//   for (let i = 0 ; i < arr.length ; i ++) {
+//     user_areas.push(arr[i].area_id);
+//   }
+//   let dup_removed_areas = [...new Set(user_areas)];
+//   let is = dup_removed_areas.filter(x => p_include_area_ids.includes(x));
+//   if (is.length >= 2) {
+//     car_ids.push(user_id);
+//   }
+
+//   if (dup_removed_areas.length >= 3 && is.length <= 1) {
+//     user_ids.push(user_id);
+//     console.log(dup_removed_areas)
+//   }
+
+
+// }
+// console.log(`${car_ids.length} ${user_ids.length} ${Object.keys(obj_group_result).length}`);
+
+
+
+
+let p_include_area_ids = ['203','202']; // 왼쪽 
+// let c_include_area_ids = ['] // japan car
 let user_ids = [];
 let car_ids = [];
-let else_cnt = 0;
 for (let user_id in obj_group_result) {
   let arr = obj_group_result[user_id];
 
   let cnt = 0;
   let user_includes = [];
   let sizes = [];
+  let user_areas = [];
   for (let i = 0 ; i < arr.length ; i ++) {
-    // if (include_static_area_ids.includes(arr[i].area_id)) {
-    //   user_includes.push(arr[i].static_id);
-    //   cnt++;
-    // } else {
+    user_areas.push(arr[i].area_id);
+  }
+  let dup_removed_areas = [...new Set(user_areas)];
+  let is = dup_removed_areas.filter(x => p_include_area_ids.includes(x));
 
-    // }
-    sizes.push(arr[i].size);
+  if (dup_removed_areas.length >= 3 && dup_removed_areas.length <= 4 && is.length === 2) {
+    user_ids.push(user_id);
+    console.log(dup_removed_areas)
   }
-  if (mathjs.min(sizes) >= 2000) 
-  {
-    car_ids.push(user_id);
-    // console.log(`${user_id} - ${user_includes}`)
-  } else if (mathjs.min(sizes) <= 1000) {
-    user_ids.push(user_id)
-  } else {
-    else_cnt += 1;
-  }
+
 
 }
-console.log(`${car_ids.length} ${user_ids.length} ${else_cnt}`);
-fs.appendFileSync('./0425_ids.txt', `${car_ids.join(',')}\n`)
-fs.appendFileSync('./0425_ids.txt', user_ids.join(','))
-
+console.log(`${car_ids.length} ${user_ids.length} ${Object.keys(obj_group_result).length}`);
