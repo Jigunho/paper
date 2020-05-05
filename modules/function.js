@@ -35,8 +35,35 @@ function printGridStatic (ary, height, width) {
     fs.appendFileSync('./print_test.txt',`${str}\n`);
   }
 }
-
+function reviseXY(x, y, video_x, video_y, origin_area_id) {
+  // adaptive grid id
+  let return_x = x;
+  let return_y = y;
+  if (x > video_x) {
+    return_x = video_x -1;
+  } 
+  if (x <= 0) {
+    return_x = 1;
+  }
+  if (y > video_y) {
+    return_y = video_y -1;
+  } 
+  if( y <= 0) {
+    return_y = 1;
+  }
+  let AREA_X_SIZE = video_x / 4;
+  let AREA_Y_SIZE = video_y / 4;
+  let area_x = Math.ceil(x / AREA_X_SIZE);
+  let area_y = Math.ceil(y / AREA_Y_SIZE);
+  let area_id = `${area_x}0${area_y}`;
+  // console.log(`${video_x}, ${video_y}, origin:(${x},${y}):${origin_area_id} -> revise(${return_x},${return_y}):${area_id}`)
+  
+  return { return_x, return_y }
+}
+exports.reviseXY = reviseXY;
 function getGridId(x, y, grid_infos) {
+
+
   // adaptive grid id
   for (let key in grid_infos) {
     if (x >= grid_infos[key].x && x <= grid_infos[key].x + grid_infos[key].w && y >= grid_infos[key].y && y <= grid_infos[key].y + grid_infos[key].h) {
@@ -224,4 +251,9 @@ exports.getAreaId3 = (video_x, video_y, x, y) => {
 
 
 }
+
 exports.func = func;
+const getDirectionId = (direction) => {
+  return Math.floor(direction / 90)
+}
+exports.getDirectionId = getDirectionId;

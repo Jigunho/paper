@@ -10,6 +10,7 @@
   "license": "ISC",
   "dependencies": {
     "lodash": "^4.17.15",
-    "mathjs": "^6.6.1"
+    "mathjs": "^6.6.1",
+    "node-fpgrowth": "^1.2.1"
   }
 }

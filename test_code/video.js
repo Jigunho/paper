@@ -1,7 +1,7 @@
 const fs = require('fs');
 const _ = require('lodash');
 const mathjs = require('mathjs')
-const lines = fs.readFileSync('./0303_type/japan4road_15min.txt').toString().split('\n');
+const lines = fs.readFileSync('./0303_type/0327_japan.txt').toString().split('\n');
 console.log(lines.length);
 
 let screen_width = 12;
@@ -16,11 +16,19 @@ let grid_obj_sizes2 = {}; // 높이, 넓이 / 2 ^ 2
 let objs = {};
 let x_max = -1;
 let y_max = -1;
+let x_min = 100;
+let y_min = 100;
 for (let i = 0 ; i < lines.length ; i ++) {
   let cols = lines[i].split('\t');
 
   let x = parseInt(cols[5]);
   let y = parseInt(cols[6]);
+  if (x_min > x) {
+    x_min = x;
+  }
+  if (y_min > y) {
+    y_min = y;
+  }
   if(x_max < x) {
     x_max = x;
   }
@@ -70,3 +78,4 @@ for (let grid in grid_obj_sizes) {
  console.log(`${grid} - ${grid_avg}/${grid_avg2} , ${grid_std}/${grid_std2}  :: support: ${grid_obj_sizes[grid].length}/${grid_obj_sizes2[grid].length}`)
 }
 console.log(`max: ${x_max} ${y_max}`)
+console.log(`min: ${x_min} ${y_min}`)
