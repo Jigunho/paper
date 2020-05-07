@@ -11,6 +11,7 @@
   "dependencies": {
     "lodash": "^4.17.15",
     "mathjs": "^6.6.1",
-    "node-fpgrowth": "^1.2.1"
+    "node-fpgrowth": "^1.2.1",
+    "pidusage": "^2.0.18"
   }
 }
