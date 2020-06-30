@@ -4,8 +4,8 @@ const mathjs = require('mathjs')
 
 const funcSet = require('./modules/function');
 const split_m = 0
-let video_x = 960;  // 
-let video_y = 540; // japan 거리
+let video_x = 320;  // 
+let video_y = 180; // japan 거리
 // let video_x = 640; // 현대 0414 올림픽대로
 // let video_y = 640;
 // let video_x = 320; // T 3거리 
@@ -17,12 +17,12 @@ let static_video_x = video_x / 10;
 let static_video_y = video_y / 10;
 let grid_result = {};
 const split_cnt = 4;
-const file_name = `0327_japan`
+const file_name = `0425_T_car`
 const u_lines = fs.readFileSync(`./0303_type/${file_name}.txt`).toString().split('\n');
 
-const target_split = { 101: 1, 102: 1, 103: 1, 104: 2, 201: 1, 202: 1, 203: 2, 204: 2, 301: 1, 302: 2, 303: 2, 304: 1, 401: 1, 402: 2, 403: 1, 404: 1 };
+// const target_split = { 101: 1, 102: 1, 103: 1, 104: 2, 201: 1, 202: 1, 203: 2, 204: 2, 301: 1, 302: 2, 303: 2, 304: 1, 401: 1, 402: 2, 403: 1, 404: 1 };
 // japan
-// const target_split = { 101: 1, 102: 2, 103: 2, 104: 1, 201: 1, 202: 2, 203: 2, 204: 1, 301: 1, 302: 2, 303: 2, 304: 1, 401: 1, 402: 2, 403: 2, 404: 1 };
+const target_split = { 101: 1, 102: 2, 103: 2, 104: 1, 201: 1, 202: 2, 203: 2, 204: 1, 301: 1, 302: 2, 303: 2, 304: 1, 401: 1, 402: 2, 403: 2, 404: 1 };
 // T 
 // const target_split = { 101: 1, 102: 1, 103: 1, 104: 1, 201: 1, 202: 1, 203: 1, 204: 1, 301: 1, 302: 1, 303: 1, 304: 1, 401: 1, 402: 1, 403: 1, 404: 1 };
 // high
@@ -198,104 +198,104 @@ for (let area_id in area_median_result) {
 }
 for (let a_g_id in grid_result_intersect) {
   let grid_result = grid_result_intersect[a_g_id];
-  // console.log(`intersect ${JSON.stringify(grid_result)}`);
-  // fs.appendFileSync(`./${file_name}_grid_result_intersect.txt`, `${JSON.stringify(grid_result)},\n`);
+  console.log(`intersect ${JSON.stringify(grid_result)}`);
+  fs.appendFileSync(`./0622_${file_name}_grid_result_intersect.txt`, `${JSON.stringify(grid_result)},\n`);
 
 }
 for (let a_g_id in grid_result_small) {
   let grid_result = grid_result_small[a_g_id];
-  // fs.appendFileSync(`./${file_name}_grid_result_small.txt`, `${JSON.stringify(grid_result)},\n`);
+  fs.appendFileSync(`./0622_${file_name}_grid_result_small.txt`, `${JSON.stringify(grid_result)},\n`);
 
 }
 for (let a_g_id in grid_result_big) {
   let grid_result = grid_result_big[a_g_id];
-  // fs.appendFileSync(`./${file_name}_grid_result_big.txt`, `${JSON.stringify(grid_result)},\n`);
+  fs.appendFileSync(`./0622_${file_name}_grid_result_big.txt`, `${JSON.stringify(grid_result)},\n`);
 
 }
 
 console.log(`${Object.keys(grid_result_intersect).length} , ${Object.keys(grid_result_big).length}, ${Object.keys(grid_result_small).length}`)
 
 
-// let target_ids = ['141', '199', '396', '448','497', '763', '765', '892', '1049', '1074', '1164', '1199', '1210', '1278', '1403', '1439', '1453']; // 차량
-let target_ids = ['8', '21', '25', '29', '35', '40', '45', '56', '75', '134', '168', '186', '231', '232', '241', '269', '347']; // 사람
+// // let target_ids = ['141', '199', '396', '448','497', '763', '765', '892', '1049', '1074', '1164', '1199', '1210', '1278', '1403', '1439', '1453']; // 차량
+// let target_ids = ['8', '21', '25', '29', '35', '40', '45', '56', '75', '134', '168', '186', '231', '232', '241', '269', '347']; // 사람
 
-let targets_logs = {};
-
-
-
-let user_obj_ary = _.groupBy(log_ary, 'object_id');
-for (let user_id in user_obj_ary) {
-
-  if (!target_ids.includes(user_id)) {
-    continue;
-  }
-  let arr = user_obj_ary[user_id];
-
-  targets_logs[user_id] = JSON.parse(JSON.stringify(arr));
-  // console.log(arr);
-
-}
-
-for (let target_id in targets_logs) {
-
-  let target_logs = targets_logs[target_id];
-  let user_static_ids = [];
-  let user_adaptive_grids = []
-
-  for (let i = 0; i < target_logs.length; i++) {
-
-    ///////////////////////////// 실제 좌표 ////////////////////////////
+// let targets_logs = {};
 
 
-    ///////////////////////////// 고정 그리드 /////////////////////////
 
-    let s_id = target_logs[i].grid_id
-    if (!user_static_ids.includes(s_id)) {
-      user_static_ids.push(s_id);
-    }
+// let user_obj_ary = _.groupBy(log_ary, 'object_id');
+// for (let user_id in user_obj_ary) {
 
+//   if (!target_ids.includes(user_id)) {
+//     continue;
+//   }
+//   let arr = user_obj_ary[user_id];
 
-    let u_area_result = user_area_result[target_logs[i].area_id]
-    if (!u_area_result) {
-      continue;
-    }
-    // console.log(`${arr[j].area_id} - ${u_area_result}`)
-    let r = -1;
-    let g_info = null;
-    let g_size = -1;
-    // console.log(`${arr[j].area_id} - ${u_area_result}`)
-    if (u_area_result === 1) {
-      // big
-      r = funcSet.getGridId(target_logs[i].x, target_logs[i].y, grid_result_big)
-      g_info = funcSet.getTargetGridInfo(target_logs[i].area_id, grid_result_big);
-      g_size = funcSet.getGridSizeKey(r, grid_result_big);
+//   targets_logs[user_id] = JSON.parse(JSON.stringify(arr));
+//   // console.log(arr);
 
-    } else if (u_area_result === 0) {
-      // small
-      r = funcSet.getGridId(target_logs[i].x, target_logs[i].y, grid_result_small);
-      g_info = funcSet.getTargetGridInfo(target_logs[i].area_id, grid_result_small);
-      g_size = funcSet.getGridSizeKey(r, grid_result_small);
+// }
 
-    } else if (u_area_result === -1) {
-      // 중립
-      r = funcSet.getGridId(target_logs[i].x, target_logs[i].y, grid_result_intersect);
-      g_info = funcSet.getTargetGridInfo(target_logs[i].area_id, grid_result_intersect);
-      g_size = funcSet.getGridSizeKey(r, grid_result_intersect);
+// for (let target_id in targets_logs) {
 
-    }
+//   let target_logs = targets_logs[target_id];
+//   let user_static_ids = [];
+//   let user_adaptive_grids = []
 
-    if (r == -1 || g_size === -1 || g_size === undefined || g_info === null) {
-      continue
-    } else {
+//   for (let i = 0; i < target_logs.length; i++) {
 
-      user_adaptive_grids.push(g_size.id);
+//     ///////////////////////////// 실제 좌표 ////////////////////////////
 
 
-    }
+//     ///////////////////////////// 고정 그리드 /////////////////////////
+
+//     let s_id = target_logs[i].grid_id
+//     if (!user_static_ids.includes(s_id)) {
+//       user_static_ids.push(s_id);
+//     }
 
 
-  }
-  // console.log(`${target_id} static: ${user_static_ids}`);
-  console.log(`${target_id} adaptive: ${JSON.stringify(user_adaptive_grids)}`);
+//     let u_area_result = user_area_result[target_logs[i].area_id]
+//     if (!u_area_result) {
+//       continue;
+//     }
+//     // console.log(`${arr[j].area_id} - ${u_area_result}`)
+//     let r = -1;
+//     let g_info = null;
+//     let g_size = -1;
+//     // console.log(`${arr[j].area_id} - ${u_area_result}`)
+//     if (u_area_result === 1) {
+//       // big
+//       r = funcSet.getGridId(target_logs[i].x, target_logs[i].y, grid_result_big)
+//       g_info = funcSet.getTargetGridInfo(target_logs[i].area_id, grid_result_big);
+//       g_size = funcSet.getGridSizeKey(r, grid_result_big);
 
-}
+//     } else if (u_area_result === 0) {
+//       // small
+//       r = funcSet.getGridId(target_logs[i].x, target_logs[i].y, grid_result_small);
+//       g_info = funcSet.getTargetGridInfo(target_logs[i].area_id, grid_result_small);
+//       g_size = funcSet.getGridSizeKey(r, grid_result_small);
+
+//     } else if (u_area_result === -1) {
+//       // 중립
+//       r = funcSet.getGridId(target_logs[i].x, target_logs[i].y, grid_result_intersect);
+//       g_info = funcSet.getTargetGridInfo(target_logs[i].area_id, grid_result_intersect);
+//       g_size = funcSet.getGridSizeKey(r, grid_result_intersect);
+
+//     }
+
+//     if (r == -1 || g_size === -1 || g_size === undefined || g_info === null) {
+//       continue
+//     } else {
+
+//       user_adaptive_grids.push(g_size.id);
+
+
+//     }
+
+
+//   }
+//   // console.log(`${target_id} static: ${user_static_ids}`);
+//   console.log(`${target_id} adaptive: ${JSON.stringify(user_adaptive_grids)}`);
+
+// }

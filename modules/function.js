@@ -1,6 +1,6 @@
 const _ = require('lodash')
 const mathjs = require('mathjs')
-const split_m = 0.5
+const split_m = 0;
 function getGridSizeKey(id, grid_infos) {
   return grid_infos[id];
 }
@@ -66,7 +66,7 @@ function getGridId(x, y, grid_infos) {
 
   // adaptive grid id
   for (let key in grid_infos) {
-    if (x >= grid_infos[key].x && x <= grid_infos[key].x + grid_infos[key].w && y >= grid_infos[key].y && y <= grid_infos[key].y + grid_infos[key].h) {
+    if ((x >= grid_infos[key].x && x <= grid_infos[key].x + grid_infos[key].w) && (y >= grid_infos[key].y && y <= grid_infos[key].y + grid_infos[key].h)) {
       return key;
     }
   }

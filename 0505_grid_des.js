@@ -221,7 +221,7 @@ for (let area_id in area_median_result) {
 for (let a_g_id in grid_result_intersect) {
   let grid_result = grid_result_intersect[a_g_id];
   // console.log(`intersect ${JSON.stringify(grid_result)}`);
-  // fs.appendFileSync(`./0505_${file_name}_grid_result_intersect.txt`, `${JSON.stringify(grid_result)},\n`);
+  fs.appendFileSync(`./0505_${file_name}_grid_result_intersect.txt`, `${JSON.stringify(grid_result)},\n`);
 
 }
 for (let a_g_id in grid_result_small) {
